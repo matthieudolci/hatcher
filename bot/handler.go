@@ -98,8 +98,15 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	action := payload.Actions[0].Value
-	ev := s.MessageEvent
-	api := s.Client
+	api := slack.New(s.Token)
+	userid := fmt.Sprintf(payload.User.ID)
+	user, err := api.GetUserInfo(userid)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		return
+	}
+	fullname := fmt.Sprintf(user.Profile.RealName)
+	email := fmt.Sprintf(user.Profile.Email)
 	switch action {
 	case "good":
 		w.Write([]byte("good!"))
@@ -108,10 +115,15 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 	case "sad":
 		w.Write([]byte("sad!"))
 	case "yes":
-		initBot(ev, api)
+		s.initBot(userid, email, fullname)
 		w.Write([]byte("User setup all done!"))
 	case "no":
 		w.Write([]byte("No worries, let me know if you want to later on!"))
+	case "delete":
+		s.removeBot(userid, fullname)
+		w.Write([]byte("Sorry to see you go. Your user was deleted."))
+	case "cancel":
+		w.Write([]byte("Glad you decided to stay :smiley:"))
 	default:
 		w.WriteHeader(http.StatusNotAcceptable)
 		w.Write([]byte(fmt.Sprintf("could not process callback: %s", action)))

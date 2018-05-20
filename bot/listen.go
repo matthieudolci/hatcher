@@ -31,7 +31,7 @@ func (s *Slack) Run(ctx context.Context) error {
 	s.User = authTest.User
 	s.UserID = authTest.UserID
 
-	s.Logger.Printf("[INFO]  bot is now registered as %s (%s)\n", s.User, s.UserID)
+	s.Logger.Printf("[INFO] bot is now registered as %s (%s)\n", s.User, s.UserID)
 
 	go s.run(ctx)
 	return nil
@@ -44,7 +44,7 @@ func (s *Slack) run(ctx context.Context) {
 	rtm := s.Client.NewRTM()
 	go rtm.ManageConnection()
 
-	s.Logger.Printf("[INFO]  now listening for incoming messages...")
+	s.Logger.Printf("[INFO] now listening for incoming messages...")
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
@@ -62,7 +62,7 @@ func (s *Slack) run(ctx context.Context) {
 
 			user, err := s.Client.GetUserInfo(ev.User)
 			if err != nil {
-				s.Logger.Printf("[WARN]  could not grab user information: %s", ev.User)
+				s.Logger.Printf("[WARN] could not grab user information: %s", ev.User)
 				continue
 			}
 
@@ -76,6 +76,11 @@ func (s *Slack) run(ctx context.Context) {
 			err = s.askSetup(ev)
 			if err != nil {
 				s.Logger.Printf("[ERROR] posting setup reply to user (%s): %+v\n", ev.User, err)
+			}
+
+			err = s.askRemove(ev)
+			if err != nil {
+				s.Logger.Printf("[ERROR] posting remove reply to user (%s): %+v\n", ev.User, err)
 			}
 
 		case *slack.RTMError:
