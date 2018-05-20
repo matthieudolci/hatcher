@@ -26,7 +26,8 @@ type Slack struct {
 
 	Logger *log.Logger
 
-	Client *slack.Client
+	Client       *slack.Client
+	MessageEvent *slack.MessageEvent
 }
 
 // PostMap is a global map to handle callbacks depending on the provided user
@@ -58,7 +59,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func postHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.URL.Path != "/" {
 		w.WriteHeader(http.StatusNotFound)
@@ -97,6 +98,8 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	action := payload.Actions[0].Value
+	ev := s.MessageEvent
+	api := s.Client
 	switch action {
 	case "good":
 		w.Write([]byte("good!"))
@@ -105,7 +108,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	case "sad":
 		w.Write([]byte("sad!"))
 	case "yes":
-		initBot()
+		initBot(ev, api)
 		w.Write([]byte("User setup all done!"))
 	case "no":
 		w.Write([]byte("No worries, let me know if you want to later on!"))
@@ -119,7 +122,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewHandler instantiaties the web handler for listening on the API
-func NewHandler() (http.Handler, error) {
+func (s *Slack) NewHandler() (http.Handler, error) {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -138,7 +141,7 @@ func NewHandler() (http.Handler, error) {
 	r.Use(cors.Handler)
 
 	r.Get("/", indexHandler)
-	r.Post("/", postHandler)
+	r.Post("/", s.postHandler)
 
 	r.Get("/debug/pprof/*", pprof.Index)
 	r.Get("/debug/vars", func(w http.ResponseWriter, r *http.Request) {
