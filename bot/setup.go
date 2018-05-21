@@ -35,37 +35,18 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 			Color:      "#AED6F1",
 			Actions: []slack.AttachmentAction{
 				slack.AttachmentAction{
-					Name:  "action",
+					Name:  "SetupYes",
 					Text:  "Yes",
 					Type:  "button",
 					Value: "SetupYes",
+					Style: "primary",
 				},
 				slack.AttachmentAction{
-					Name:  "action",
+					Name:  "SetupNo",
 					Text:  "No",
 					Type:  "button",
 					Value: "SetupNo",
-				},
-				slack.AttachmentAction{
-					Name: "selectIfManager",
-					Type: "select",
-					Text: "Are you a manager?",
-					Options: []slack.AttachmentActionOption{
-						{
-							Text:  "Yes",
-							Value: "SetupManagerYes",
-						},
-						{
-							Text:  "No",
-							Value: "SetupManagerNo",
-						},
-					},
-				},
-				slack.AttachmentAction{
-					Name:       "whoIsManager",
-					Type:       "select",
-					Text:       "Who is your manager?",
-					DataSource: "users",
+					Style: "danger",
 				},
 			},
 		}
@@ -104,16 +85,18 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 			Color:      "#FF0000",
 			Actions: []slack.AttachmentAction{
 				slack.AttachmentAction{
-					Name:  "action",
+					Name:  "RemoveYes",
 					Text:  "Yes",
 					Type:  "button",
 					Value: "RemoveYes",
+					Style: "primary",
 				},
 				slack.AttachmentAction{
-					Name:  "action",
+					Name:  "RemoveNo",
 					Text:  "No",
 					Type:  "button",
 					Value: "RemoveNo",
+					Style: "danger",
 				},
 			},
 		}
@@ -209,4 +192,46 @@ func (s *Slack) removeBot(userid, fullname string) {
 	default:
 		panic(err)
 	}
+}
+
+func (s *Slack) askWhoIsManager(ev *slack.MessageEvent) error {
+	text := ev.Text
+	text = strings.TrimSpace(text)
+	text = strings.ToLower(text)
+
+	acceptedRemove := map[string]bool{
+		"manager": true,
+	}
+
+	if acceptedRemove[text] {
+		params := slack.PostMessageParameters{}
+		attachment := slack.Attachment{
+			Text:       "Who is your manager?",
+			CallbackID: fmt.Sprintf("ask_%s", ev.User),
+			Color:      "#AED6F1",
+			Actions: []slack.AttachmentAction{
+				slack.AttachmentAction{
+					Name:       "WhoIsManager",
+					Text:       "Type to filter option",
+					Type:       "select",
+					DataSource: "users",
+					Value:      "WhoIsManager",
+				},
+			},
+		}
+		params.Attachments = []slack.Attachment{attachment}
+		params.User = ev.User
+		params.AsUser = true
+
+		_, err := s.Client.PostEphemeral(
+			ev.Channel,
+			ev.User,
+			slack.MsgOptionAttachments(params.Attachments...),
+			slack.MsgOptionPostMessageParameters(params),
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
