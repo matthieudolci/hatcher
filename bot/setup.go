@@ -22,12 +22,12 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
 
-	acceptedHowAreYou := map[string]bool{
+	acceptedSetup := map[string]bool{
 		"setup": true,
 		"init":  true,
 	}
 
-	if acceptedHowAreYou[text] {
+	if acceptedSetup[text] {
 		params := slack.PostMessageParameters{}
 		attachment := slack.Attachment{
 			Text:       "Do you want to setup/update your user with the bot Hatcher?",
@@ -38,13 +38,34 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 					Name:  "action",
 					Text:  "Yes",
 					Type:  "button",
-					Value: "yes",
+					Value: "SetupYes",
 				},
 				slack.AttachmentAction{
 					Name:  "action",
 					Text:  "No",
 					Type:  "button",
-					Value: "no",
+					Value: "SetupNo",
+				},
+				slack.AttachmentAction{
+					Name: "selectIfManager",
+					Type: "select",
+					Text: "Are you a manager?",
+					Options: []slack.AttachmentActionOption{
+						{
+							Text:  "Yes",
+							Value: "SetupManagerYes",
+						},
+						{
+							Text:  "No",
+							Value: "SetupManagerNo",
+						},
+					},
+				},
+				slack.AttachmentAction{
+					Name:       "whoIsManager",
+					Type:       "select",
+					Text:       "Who is your manager?",
+					DataSource: "users",
 				},
 			},
 		}
@@ -70,12 +91,12 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
 
-	acceptedHowAreYou := map[string]bool{
+	acceptedRemove := map[string]bool{
 		"remove": true,
 		"delete": true,
 	}
 
-	if acceptedHowAreYou[text] {
+	if acceptedRemove[text] {
 		params := slack.PostMessageParameters{}
 		attachment := slack.Attachment{
 			Text:       "Do you want to delete your user?",
@@ -86,13 +107,13 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 					Name:  "action",
 					Text:  "Yes",
 					Type:  "button",
-					Value: "delete",
+					Value: "RemoveYes",
 				},
 				slack.AttachmentAction{
 					Name:  "action",
 					Text:  "No",
 					Type:  "button",
-					Value: "cancel",
+					Value: "RemoveNo",
 				},
 			},
 		}

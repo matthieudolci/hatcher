@@ -114,15 +114,15 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("neutral!"))
 	case "sad":
 		w.Write([]byte("sad!"))
-	case "yes":
+	case "SetupYes":
 		s.initBot(userid, email, fullname)
 		w.Write([]byte("User setup all done!"))
-	case "no":
+	case "SetupNo":
 		w.Write([]byte("No worries, let me know if you want to later on!"))
-	case "delete":
+	case "RemoveYes":
 		s.removeBot(userid, fullname)
 		w.Write([]byte("Sorry to see you go. Your user was deleted."))
-	case "cancel":
+	case "RemoveNo":
 		w.Write([]byte("Glad you decided to stay :smiley:"))
 	default:
 		w.WriteHeader(http.StatusNotAcceptable)
