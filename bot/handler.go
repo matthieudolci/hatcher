@@ -107,6 +107,7 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fullname := fmt.Sprintf(user.Profile.RealName)
+	displayname := fmt.Sprintf(user.Profile.DisplayName)
 	email := fmt.Sprintf(user.Profile.Email)
 	channelid := fmt.Sprintf(payload.Channel.ID)
 
@@ -142,9 +143,9 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("%s\n", err)
 			return
 		}
-		managername := fmt.Sprintf(manager.Profile.RealName)
+		managername := fmt.Sprintf(manager.Profile.DisplayName)
 		s.initManager(userid, fullname, managerid)
-		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager", managername)))
+		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager\n\n :white_check_mark: - %s your user is now setup!", managername, displayname)))
 	}
 
 	w.WriteHeader(http.StatusOK)
