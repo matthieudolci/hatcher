@@ -138,3 +138,43 @@ func (s *Slack) askWhoIsManager(channelid, userid string) error {
 	}
 	return nil
 }
+
+func (s *Slack) askIfManager(channelid, userid string) error {
+
+	params := slack.PostMessageParameters{}
+	attachment := slack.Attachment{
+		Text:       "Are you a manager?",
+		CallbackID: fmt.Sprintf("ismanager_%s", userid),
+		Color:      "#AED6F1",
+		Actions: []slack.AttachmentAction{
+			slack.AttachmentAction{
+				Name:  "isManagerYes",
+				Text:  "Yes",
+				Type:  "button",
+				Value: "isManagerYes",
+				Style: "primary",
+			},
+			slack.AttachmentAction{
+				Name:  "isManagerNo",
+				Text:  "No",
+				Type:  "button",
+				Value: "isManagerNo",
+				Style: "danger",
+			},
+		},
+	}
+	params.Attachments = []slack.Attachment{attachment}
+	params.User = userid
+	params.AsUser = true
+
+	_, err := s.Client.PostEphemeral(
+		channelid,
+		userid,
+		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionPostMessageParameters(params),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}

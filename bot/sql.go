@@ -15,7 +15,7 @@ const (
 	dbname   = "hatcher"
 )
 
-func (s *Slack) initManager(userid, fullname, managerid string) {
+func (s *Slack) initManager(userid, fullname, managerid, managername string) {
 	var id string
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
@@ -32,7 +32,7 @@ func (s *Slack) initManager(userid, fullname, managerid string) {
 	switch err := row.Scan(&id); err {
 	// if user doesnt exit, exit
 	case sql.ErrNoRows:
-		s.Logger.Printf("[DEBUG] User %s is registered.", fullname)
+		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
 	// If the user exist we update the column manager_id
 	case nil:
 		sqlUpdate := `
@@ -44,7 +44,7 @@ func (s *Slack) initManager(userid, fullname, managerid string) {
 		if err != nil {
 			panic(err)
 		}
-		s.Logger.Printf("[DEBUG] User (%s) was updated.\n", fullname)
+		s.Logger.Printf("[DEBUG] Manager %s was added to user %s.\n", managername, fullname)
 	default:
 		panic(err)
 	}
@@ -122,6 +122,41 @@ func (s *Slack) removeBot(userid, fullname string) {
 			panic(err)
 		}
 		s.Logger.Printf("[DEBUG] User %s with id %s was deleted.", fullname, userid)
+	default:
+		panic(err)
+	}
+}
+
+func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
+	var id string
+
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	// Check if the user already exist
+	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
+	row := db.QueryRow(sqlCheckID, userid)
+	switch err := row.Scan(&id); err {
+	// if user doesnt exit, exit
+	case sql.ErrNoRows:
+		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
+	// If the user exist we update the column manager_id
+	case nil:
+		sqlUpdate := `
+		UPDATE hatcher.users
+		SET is_manager = $2
+		WHERE user_id = $1
+		RETURNING id;`
+		err = db.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid)
+		if err != nil {
+			panic(err)
+		}
+		s.Logger.Printf("[DEBUG] %s is now setup as a manager.\n", fullname)
 	default:
 		panic(err)
 	}
