@@ -31,7 +31,7 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 		params := slack.PostMessageParameters{}
 		attachment := slack.Attachment{
 			Text:       "Do you want to setup/update your user with the bot Hatcher?",
-			CallbackID: fmt.Sprintf("ask_%s", ev.User),
+			CallbackID: fmt.Sprintf("setup_%s", ev.User),
 			Color:      "#AED6F1",
 			Actions: []slack.AttachmentAction{
 				slack.AttachmentAction{
@@ -81,7 +81,7 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 		params := slack.PostMessageParameters{}
 		attachment := slack.Attachment{
 			Text:       "Do you want to delete your user?",
-			CallbackID: fmt.Sprintf("ask_%s", ev.User),
+			CallbackID: fmt.Sprintf("remove_%s", ev.User),
 			Color:      "#FF0000",
 			Actions: []slack.AttachmentAction{
 				slack.AttachmentAction{
@@ -175,11 +175,11 @@ func (s *Slack) removeBot(userid, fullname string) {
 	}
 	defer db.Close()
 	// Check if the user already exist
-	sqlCheckId := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
-	row := db.QueryRow(sqlCheckId, userid)
+	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
+	row := db.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
 	case sql.ErrNoRows:
-		fmt.Sprintf("[DEBUG] User %s was not registered.", fullname)
+		s.Logger.Printf("[DEBUG] User %s was not registered.", fullname)
 	case nil:
 		sqlDelete := `
 		DELETE FROM hatcher.users
@@ -194,44 +194,35 @@ func (s *Slack) removeBot(userid, fullname string) {
 	}
 }
 
-func (s *Slack) askWhoIsManager(ev *slack.MessageEvent) error {
-	text := ev.Text
-	text = strings.TrimSpace(text)
-	text = strings.ToLower(text)
+func (s *Slack) askWhoIsManager(channelid, userid string) error {
 
-	acceptedRemove := map[string]bool{
-		"manager": true,
-	}
-
-	if acceptedRemove[text] {
-		params := slack.PostMessageParameters{}
-		attachment := slack.Attachment{
-			Text:       "Who is your manager?",
-			CallbackID: fmt.Sprintf("ask_%s", ev.User),
-			Color:      "#AED6F1",
-			Actions: []slack.AttachmentAction{
-				slack.AttachmentAction{
-					Name:       "WhoIsManager",
-					Text:       "Type to filter option",
-					Type:       "select",
-					DataSource: "users",
-					Value:      "WhoIsManager",
-				},
+	params := slack.PostMessageParameters{}
+	attachment := slack.Attachment{
+		Text:       "Who is your manager?",
+		CallbackID: fmt.Sprintf("manager_%s", userid),
+		Color:      "#AED6F1",
+		Actions: []slack.AttachmentAction{
+			slack.AttachmentAction{
+				Name:       "WhoIsManager",
+				Text:       "Type to filter option",
+				Type:       "select",
+				DataSource: "users",
 			},
-		}
-		params.Attachments = []slack.Attachment{attachment}
-		params.User = ev.User
-		params.AsUser = true
-
-		_, err := s.Client.PostEphemeral(
-			ev.Channel,
-			ev.User,
-			slack.MsgOptionAttachments(params.Attachments...),
-			slack.MsgOptionPostMessageParameters(params),
-		)
-		if err != nil {
-			return err
-		}
+		},
 	}
+	params.Attachments = []slack.Attachment{attachment}
+	params.User = userid
+	params.AsUser = true
+
+	_, err := s.Client.PostEphemeral(
+		channelid,
+		userid,
+		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionPostMessageParameters(params),
+	)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

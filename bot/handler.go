@@ -97,6 +97,7 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	value := payload.Actions[0].Value
 	name := payload.Actions[0].Name
 	api := slack.New(s.Token)
 	userid := fmt.Sprintf(payload.User.ID)
@@ -107,8 +108,9 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fullname := fmt.Sprintf(user.Profile.RealName)
 	email := fmt.Sprintf(user.Profile.Email)
+	channelid := fmt.Sprintf(payload.Channel.ID)
 
-	switch name {
+	switch value {
 	case "good":
 		w.Write([]byte("good!"))
 	case "neutral":
@@ -116,8 +118,9 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 	case "sad":
 		w.Write([]byte("sad!"))
 	case "SetupYes":
+		w.Write([]byte(":white_check_mark: - Starting the setup of your user."))
 		s.initBot(userid, email, fullname)
-		w.Write([]byte("User setup all done!"))
+		s.askWhoIsManager(channelid, userid)
 	case "SetupNo":
 		w.Write([]byte("No worries, let me know if you want to later on!"))
 	case "RemoveYes":
@@ -125,15 +128,23 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Sorry to see you go. Your user was deleted."))
 	case "RemoveNo":
 		w.Write([]byte("Glad you decided to stay :smiley:"))
-	case "WhoIsManager":
-		managerid := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
-		manager, err := api.GetUserInfo(managerid)
-		if err != nil {
-			fmt.Printf("%s\n", err)
-			return
-		}
-		managername := fmt.Sprintf(manager.Profile.RealName)
-		w.Write([]byte(fmt.Sprintf(":white_check_mark: %s was setup as your manager", managername)))
+	default:
+		w.WriteHeader(http.StatusNotAcceptable)
+		w.Write([]byte(fmt.Sprintf("could not process callback: %s", value)))
+		return
+	}
+
+	switch name {
+	case "ManagerChosen":
+		// managerid := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
+		// manager, err := api.GetUserInfo(managerid)
+		// if err != nil {
+		// 	fmt.Printf("%s\n", err)
+		// 	return
+		// }
+		// managername := fmt.Sprintf(manager.Profile.RealName)
+		// w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager", managername)))
+		w.Write([]byte(":white_check_mark: - Your user was setup!"))
 	default:
 		w.WriteHeader(http.StatusNotAcceptable)
 		w.Write([]byte(fmt.Sprintf("could not process callback: %s", name)))

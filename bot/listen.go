@@ -39,7 +39,7 @@ func (s *Slack) Run(ctx context.Context) error {
 
 func (s *Slack) run(ctx context.Context) {
 	slack.SetLogger(s.Logger)
-	//	s.Client.SetDebug(true)
+	// s.Client.SetDebug(true)
 
 	rtm := s.Client.NewRTM()
 	go rtm.ManageConnection()
@@ -68,11 +68,6 @@ func (s *Slack) run(ctx context.Context) {
 
 			s.Logger.Printf("[DEBUG] received message from %s (%s)\n", user.Profile.RealName, ev.User)
 
-			err = s.askHappinessSurvey(ev)
-			if err != nil {
-				s.Logger.Printf("[ERROR] posting happiness survey reply to user (%s): %+v\n", ev.User, err)
-			}
-
 			err = s.askSetup(ev)
 			if err != nil {
 				s.Logger.Printf("[ERROR] posting setup reply to user (%s): %+v\n", ev.User, err)
@@ -83,9 +78,9 @@ func (s *Slack) run(ctx context.Context) {
 				s.Logger.Printf("[ERROR] posting remove reply to user (%s): %+v\n", ev.User, err)
 			}
 
-			err = s.askWhoIsManager(ev)
+			err = s.askHappinessSurvey(ev)
 			if err != nil {
-				s.Logger.Printf("[ERROR] posting ask for manasger reply to user (%s): %+v\n", ev.User, err)
+				s.Logger.Printf("[ERROR] posting happiness survey reply to user (%s): %+v\n", ev.User, err)
 			}
 
 		case *slack.RTMError:
