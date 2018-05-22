@@ -128,27 +128,23 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Sorry to see you go. Your user was deleted."))
 	case "RemoveNo":
 		w.Write([]byte("Glad you decided to stay :smiley:"))
-	default:
-		w.WriteHeader(http.StatusNotAcceptable)
-		w.Write([]byte(fmt.Sprintf("could not process callback: %s", value)))
-		return
+		// default:
+		// 	w.WriteHeader(http.StatusNotAcceptable)
+		// 	w.Write([]byte(fmt.Sprintf("could not process callback: %s", value)))
+		// 	return
 	}
 
 	switch name {
 	case "ManagerChosen":
-		// managerid := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
-		// manager, err := api.GetUserInfo(managerid)
-		// if err != nil {
-		// 	fmt.Printf("%s\n", err)
-		// 	return
-		// }
-		// managername := fmt.Sprintf(manager.Profile.RealName)
-		// w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager", managername)))
-		w.Write([]byte(":white_check_mark: - Your user was setup!"))
-	default:
-		w.WriteHeader(http.StatusNotAcceptable)
-		w.Write([]byte(fmt.Sprintf("could not process callback: %s", name)))
-		return
+		managerid := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
+		manager, err := api.GetUserInfo(managerid)
+		if err != nil {
+			fmt.Printf("%s\n", err)
+			return
+		}
+		managername := fmt.Sprintf(manager.Profile.RealName)
+		s.initManager(userid, fullname, managerid)
+		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager", managername)))
 	}
 
 	w.WriteHeader(http.StatusOK)
