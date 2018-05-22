@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	// Postresql Driver
 	_ "github.com/lib/pq"
 )
 
@@ -165,4 +166,25 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
 	default:
 		panic(err)
 	}
+}
+
+func (s *Slack) resultHappinessSurvey(userid, result string) {
+
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	sqlWrite := `
+	INSERT INTO hatcher.happiness (user_id, result)
+	VALUES ($1, $2)
+	RETURNING id`
+	err = db.QueryRow(sqlWrite, userid, result).Scan(&userid)
+	if err != nil {
+		panic(err)
+	}
+	s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
 }

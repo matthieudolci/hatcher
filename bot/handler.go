@@ -112,12 +112,27 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 	channelid := fmt.Sprintf(payload.Channel.ID)
 
 	switch value {
-	case "good":
-		w.Write([]byte("good!"))
-	case "neutral":
-		w.Write([]byte("neutral!"))
-	case "sad":
-		w.Write([]byte("sad!"))
+	case "happinessGood":
+		answer := fmt.Sprintf(payload.Actions[0].Value)
+		if answer == "happinessGood" {
+			value := fmt.Sprintf("good")
+			s.resultHappinessSurvey(userid, value)
+			w.Write([]byte("Awesome, have a wonderful day!"))
+		}
+	case "happinessNeutral":
+		answer := fmt.Sprintf(payload.Actions[0].Value)
+		if answer == "happinessNeutral" {
+			value := fmt.Sprintf("neutral")
+			s.resultHappinessSurvey(userid, value)
+			w.Write([]byte("I hope your day will get better :slightly_smiling_face:"))
+		}
+	case "happinessSad":
+		answer := fmt.Sprintf(payload.Actions[0].Value)
+		if answer == "happinessSad" {
+			value := fmt.Sprintf("sad")
+			s.resultHappinessSurvey(userid, value)
+			w.Write([]byte("I am sorry to hear that. Take all the time you need to feel better."))
+		}
 	case "SetupYes":
 		w.Write([]byte(":white_check_mark: - Starting the setup of your user."))
 		s.initBot(userid, email, fullname)

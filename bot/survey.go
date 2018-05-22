@@ -27,22 +27,22 @@ func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 			Color:      "#AED6F1",
 			Actions: []slack.AttachmentAction{
 				slack.AttachmentAction{
-					Name:  "good",
+					Name:  "happinessGood",
 					Text:  ":smiley:",
 					Type:  "button",
-					Value: "good",
+					Value: "happinessGood",
 				},
 				slack.AttachmentAction{
-					Name:  "neutral",
+					Name:  "happinessNeutral",
 					Text:  ":neutral_face:",
 					Type:  "button",
-					Value: "neutral",
+					Value: "happinessNeutral",
 				},
 				slack.AttachmentAction{
-					Name:  "sad",
+					Name:  "happinessSad",
 					Text:  ":cry:",
 					Type:  "button",
-					Value: "sad",
+					Value: "happinessSad",
 				},
 			},
 		}
