@@ -156,7 +156,12 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
 		if err != nil {
 			panic(err)
 		}
-		s.Logger.Printf("[DEBUG] %s is now setup as a manager.\n", fullname)
+		if ismanager == "true" {
+			s.Logger.Printf("[DEBUG] %s is now setup as a manager.\n", fullname)
+		} else {
+			s.Logger.Printf("[DEBUG] %s is not a manager.\n", fullname)
+		}
+
 	default:
 		panic(err)
 	}
