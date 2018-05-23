@@ -1,4 +1,4 @@
-# hatcher
+# hatcher	[![Build Status](https://travis-ci.com/matthieudolci/hatcher.svg?branch=master)](https://travis-ci.com/matthieudolci/hatcher)
 
 ## Resources:
 https://blog.gopheracademy.com/advent-2017/go-slackbot/
