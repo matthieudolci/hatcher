@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:10.4
+    container_name: postgres
+    environment: 
+      - POSTGRES_PASSWORD=12345
+      - POSTGRES_USER=hatcher
+    volumes:
+      - ./.docker-data/pg:/var/lib/postgresql/data/
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+    ports:
+      - 5432:5432
+
+  hatcher:
+    image: matthieudolci/hatcher:latest
+    container_name: hatcher
+    depends_on:
+      - postgres
+    environment:
+      - DBHOST=postgres
+      - DBPORT=5432
+      - DBUSER=hatcher
+      - DBPASS=12345
+      - DBNAME=hatcher
+      - SLACK_TOKEN=$SLACK_TOKEN
+    ports:
+      - 9191:9191
