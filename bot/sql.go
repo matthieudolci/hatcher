@@ -3,25 +3,57 @@ package bot
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	// Postresql Driver
 	_ "github.com/lib/pq"
 )
 
 const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "12345"
-	dbname   = "hatcher"
+	dbhost = "DBHOST"
+	dbport = "DBPORT"
+	dbuser = "DBUSER"
+	dbpass = "DBPASS"
+	dbname = "DBNAME"
 )
 
+func dbConfig() map[string]string {
+	conf := make(map[string]string)
+	host, ok := os.LookupEnv(dbhost)
+	if !ok {
+		panic("DB_HOST environment variable required but not set")
+	}
+	port, ok := os.LookupEnv(dbport)
+	if !ok {
+		panic("DB_PORT environment variable required but not set")
+	}
+	user, ok := os.LookupEnv(dbuser)
+	if !ok {
+		panic("DB_USER environment variable required but not set")
+	}
+	password, ok := os.LookupEnv(dbpass)
+	if !ok {
+		panic("DB_PASSWORD environment variable required but not set")
+	}
+	name, ok := os.LookupEnv(dbname)
+	if !ok {
+		panic("DB_NAME environment variable required but not set")
+	}
+	conf[dbhost] = host
+	conf[dbport] = port
+	conf[dbuser] = user
+	conf[dbpass] = password
+	conf[dbname] = name
+	return conf
+}
+
 func (s *Slack) initManager(userid, fullname, managerid, managername string) {
+	config := dbConfig()
 	var id string
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
@@ -55,11 +87,12 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) {
 // It will insert the user informations inside the databse to allow us
 // to use them
 func (s *Slack) initBot(userid, email, fullname string) {
+	config := dbConfig()
 	var id string
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
@@ -99,10 +132,12 @@ func (s *Slack) initBot(userid, email, fullname string) {
 
 // removeBot remove the user from the database
 func (s *Slack) removeBot(userid, fullname string) {
+	config := dbConfig()
 	var id string
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
@@ -129,11 +164,12 @@ func (s *Slack) removeBot(userid, fullname string) {
 }
 
 func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
+	config := dbConfig()
 	var id string
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
@@ -170,9 +206,11 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
 
 func (s *Slack) resultHappinessSurvey(userid, result string) {
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+	config := dbConfig()
+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
