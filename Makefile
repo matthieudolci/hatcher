@@ -7,5 +7,5 @@ build:
 .PHONY: build
 
 push:
-	docker push matthieu.dolci/hatcher:latest
+	docker push matthieudolci/hatcher:latest
 .PHONY: push
