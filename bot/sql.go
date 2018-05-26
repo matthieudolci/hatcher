@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	// Postresql Driver
 	_ "github.com/lib/pq"
@@ -164,16 +166,19 @@ func (s *Slack) removeBot(userid, fullname string) {
 }
 
 func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
+
 	config := dbConfig()
 	var id string
 
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
+
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
+
 	defer db.Close()
 	// Check if the user already exist
 	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
@@ -211,18 +216,65 @@ func (s *Slack) resultHappinessSurvey(userid, result string) {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
+
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		panic(err)
+	}
+
+	defer db.Close()
+
+	sqlWrite := `
+	INSERT INTO hatcher.happiness (user_id, result)
+	VALUES ($1, $2)
+	RETURNING id`
+
+	err = db.QueryRow(sqlWrite, userid, result).Scan(&userid)
+	if err != nil {
+		panic(err)
+	}
+
+	s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
+}
+
+func (s *Slack) getHappinessSurveyResults(text, userid string) string {
+
+	config := dbConfig()
+	var result string
+	text = strings.TrimSpace(text)
+	text = strings.ToLower(text)
+
+	times := map[string]string{
+		"yesterday": fmt.Sprint(time.Now().Add(-1 * 24 * time.Hour).Truncate(24 * time.Hour).Format("2006-01-02")),
+		"today":     fmt.Sprint(time.Now().Format("2006-01-02")),
+	}
+
+	var time string
+	for key, value := range times {
+		if strings.Contains(text, key) {
+			time = value
+			break
+		}
+	}
+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
-	sqlWrite := `
-	INSERT INTO hatcher.happiness (user_id, result)
-	VALUES ($1, $2)
-	RETURNING id`
-	err = db.QueryRow(sqlWrite, userid, result).Scan(&userid)
+
+	sqlSelect := `
+	SELECT result 
+	FROM hatcher.happiness 
+	WHERE user_id=$1 and date=$2;`
+
+	err = db.QueryRow(sqlSelect, userid, time).Scan(&result)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
 	}
-	s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
+	s.Logger.Printf("[DEBUG] Result is %s", result)
+	return result
 }

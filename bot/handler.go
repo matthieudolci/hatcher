@@ -172,7 +172,13 @@ func (s *Slack) postHandler(w http.ResponseWriter, r *http.Request) {
 		s.initManager(userid, fullname, managerid, managername)
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager.", managername)))
 		s.askIfManager(channelid, userid)
+	case "ResultPosted":
+		id := payload.Actions[0].SelectedOptions[0].Value
+		text := payload.CallbackID
+		results := fmt.Sprintf(s.getHappinessSurveyResults(text, id))
+		w.Write([]byte(fmt.Sprintf("Here are the results: %s", results)))
 	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

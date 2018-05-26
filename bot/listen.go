@@ -83,6 +83,11 @@ func (s *Slack) run(ctx context.Context) {
 				s.Logger.Printf("[ERROR] posting happiness survey reply to user (%s): %+v\n", ev.User, err)
 			}
 
+			err = s.askForHappinessResult(ev, rtm)
+			if err != nil {
+				s.Logger.Printf("[ERROR] posting happiness results reply to user (%s): %+v\n", ev.User, err)
+			}
+
 		case *slack.RTMError:
 			s.Logger.Printf("[ERROR] %s\n", ev.Error())
 		}
