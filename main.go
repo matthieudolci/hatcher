@@ -13,6 +13,9 @@ import (
 )
 
 func main() {
+	db := InitDb()
+	defer db.Close()
+
 	lg := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	ctx := context.Background()
 

@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -57,6 +58,44 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 	return nil
 }
 
+// initBot is the first step of using this bot.
+// It will insert the user informations inside the databse to allow us
+// to use them
+func (s *Slack) initBot(userid, email, fullname, displayname string) {
+
+	var id string
+
+	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
+	row := db.QueryRow(sqlCheckID, userid)
+	switch err := row.Scan(&id); err {
+	// if user doesnt exit creates it in the database
+	case sql.ErrNoRows:
+		sqlWrite := `
+		INSERT INTO hatcher.users (user_id, email, full_name, displayname)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id`
+		err = db.QueryRow(sqlWrite, userid, email, fullname, displayname).Scan(&userid)
+		if err != nil {
+			panic(err)
+		}
+		s.Logger.Printf("[DEBUG] User (%s) was created.\n", fullname)
+	// If the user exist it will update it
+	case nil:
+		sqlUpdate := `
+		UPDATE hatcher.users
+		SET full_name = $2, email = $3, displayname = $4 
+		WHERE user_id = $1
+		RETURNING id;`
+		err = db.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid)
+		if err != nil {
+			panic(err)
+		}
+		s.Logger.Printf("[DEBUG] User (%s) was updated.\n", fullname)
+	default:
+		panic(err)
+	}
+}
+
 func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 	text := ev.Text
 	text = strings.TrimSpace(text)
@@ -107,6 +146,31 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 	return nil
 }
 
+// removeBot remove the user from the database
+func (s *Slack) removeBot(userid, fullname string) {
+
+	var id string
+
+	// Check if the user already exist
+	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
+	row := db.QueryRow(sqlCheckID, userid)
+	switch err := row.Scan(&id); err {
+	case sql.ErrNoRows:
+		s.Logger.Printf("[DEBUG] User %s was not registered.", fullname)
+	case nil:
+		sqlDelete := `
+		DELETE FROM hatcher.users
+		WHERE user_id = $1;`
+		_, err = db.Exec(sqlDelete, userid)
+		if err != nil {
+			panic(err)
+		}
+		s.Logger.Printf("[DEBUG] User %s with id %s was deleted.", fullname, userid)
+	default:
+		panic(err)
+	}
+}
+
 func (s *Slack) askWhoIsManager(channelid, userid string) error {
 
 	params := slack.PostMessageParameters{}
@@ -137,6 +201,34 @@ func (s *Slack) askWhoIsManager(channelid, userid string) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Slack) initManager(userid, fullname, managerid, managername string) {
+
+	var id string
+
+	// Check if the user already exist
+	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
+	row := db.QueryRow(sqlCheckID, userid)
+	switch err := row.Scan(&id); err {
+	// if user doesnt exit, exit
+	case sql.ErrNoRows:
+		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
+	// If the user exist we update the column manager_id
+	case nil:
+		sqlUpdate := `
+		UPDATE hatcher.users
+		SET manager_id = $2
+		WHERE user_id = $1
+		RETURNING id;`
+		err = db.QueryRow(sqlUpdate, userid, managerid).Scan(&userid)
+		if err != nil {
+			panic(err)
+		}
+		s.Logger.Printf("[DEBUG] Manager %s was added to user %s.\n", managername, fullname)
+	default:
+		panic(err)
+	}
 }
 
 func (s *Slack) askIfManager(channelid, userid string) error {
@@ -177,4 +269,37 @@ func (s *Slack) askIfManager(channelid, userid string) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
+
+	var id string
+
+	// Check if the user already exist
+	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
+	row := db.QueryRow(sqlCheckID, userid)
+	switch err := row.Scan(&id); err {
+	// if user doesnt exit, exit
+	case sql.ErrNoRows:
+		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
+	// If the user exist we update the column manager_id
+	case nil:
+		sqlUpdate := `
+		UPDATE hatcher.users
+		SET is_manager = $2
+		WHERE user_id = $1
+		RETURNING id;`
+		err = db.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid)
+		if err != nil {
+			panic(err)
+		}
+		if ismanager == "true" {
+			s.Logger.Printf("[DEBUG] %s is now setup as a manager.\n", fullname)
+		} else {
+			s.Logger.Printf("[DEBUG] %s is not a manager.\n", fullname)
+		}
+
+	default:
+		panic(err)
+	}
 }

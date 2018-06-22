@@ -1,10 +1,23 @@
-sudo: required
+language: go
 
 services:
 - docker
 
-script:
-  - make build-docker
-  - docker login -u $DOCKER_USER -p $DOCKER_PASS
-  - make push
+stages:
+  - name: build go
+    if: branch != master
+  - name: build docker image
+    if: (NOT type IN (pull_request)) AND (branch = master)
+  - name: docker push image
+    if: (NOT type IN (pull_request)) AND (branch = master)
+
+jobs:
+  include:
+    - stage: build go
+      script: make build
+    - stage: build docker image
+      script: make build-docker
+    - stage: docker push image
+      script: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      script: make push
 

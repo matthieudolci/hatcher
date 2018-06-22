@@ -10,3 +10,7 @@ https://github.com/tcnksm/go-slack-interactive
 https://api.slack.com/interactive-messages
 
 https://www.calhoun.io/
+
+https://medium.com/aubergine-solutions/how-i-handled-null-possible-values-from-database-rows-in-golang-521fb0ee267
+
+https://flaviocopes.com/golang-tutorial-rest-api/

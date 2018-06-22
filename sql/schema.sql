@@ -40,6 +40,7 @@ CREATE TABLE hatcher.users (
     email text,
     full_name text,
     manager_id text,
+    displayname text,
     is_manager boolean DEFAULT false
 );
 
