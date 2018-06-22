@@ -6,6 +6,7 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	"github.com/pkg/errors"
 )
 
 var DB *sql.DB
@@ -26,15 +27,18 @@ func InitDb() {
 		config[dbhost], config[dbport],
 		config[dbuser], config[dbpass], config[dbname])
 
-	DB, err = sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
+	if DB, err = sql.Open("postgres", psqlInfo); err != nil {
+		err = errors.Wrapf(err,
+			"Couldn't open connection to postgres database")
+		return
 	}
-	err = DB.Ping()
-	if err != nil {
-		panic(err)
+
+	if err = DB.Ping(); err != nil {
+		err = errors.Wrapf(err,
+			"Couldn't ping postgres database")
+		return
 	}
-	fmt.Println("Successfully connected!")
+	fmt.Println("Successfully connected to the postgres database!")
 }
 
 func dbConfig() map[string]string {

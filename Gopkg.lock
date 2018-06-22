@@ -37,9 +37,15 @@
   revision = "8ab4d0b364ef1e9af5d102531da20d5ec902b6c4"
   version = "v0.2.0"
 
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "539dfb0b7a06e9b275f4a7f91a207e8fa530bdfb4afe355e1373401fc7dd3bc3"
+  inputs-digest = "5ac366e93c8ab8785bfd766cd1b5e0072f5b928d4d976c3ccc1c3092d65ce395"
   solver-name = "gps-cdcl"
   solver-version = 1

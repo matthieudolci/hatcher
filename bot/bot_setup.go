@@ -7,6 +7,7 @@ import (
 
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
+	"github.com/pkg/errors"
 )
 
 func (s *Slack) askSetup(ev *slack.MessageEvent) error {
@@ -75,9 +76,10 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) {
 		INSERT INTO hatcher.users (user_id, email, full_name, displayname)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id`
-		err = database.DB.QueryRow(sqlWrite, userid, email, fullname, displayname).Scan(&userid)
-		if err != nil {
-			panic(err)
+		if err = database.DB.QueryRow(sqlWrite, userid, email, fullname, displayname).Scan(&userid); err != nil {
+			err = errors.Wrapf(err,
+				"Couldn't create user %s with ID %s in the database.\n", fullname, userid)
+			return
 		}
 		s.Logger.Printf("[DEBUG] User (%s) was created.\n", fullname)
 	// If the user exist it will update it
@@ -87,9 +89,10 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) {
 		SET full_name = $2, email = $3, displayname = $4 
 		WHERE user_id = $1
 		RETURNING id;`
-		err = database.DB.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid)
-		if err != nil {
-			panic(err)
+		if err = database.DB.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid); err != nil {
+			err = errors.Wrapf(err,
+				"Couldn't update user %s with ID %s in the database.\n", fullname, userid)
+			return
 		}
 		s.Logger.Printf("[DEBUG] User (%s) was updated.\n", fullname)
 	default:
@@ -157,16 +160,17 @@ func (s *Slack) removeBot(userid, fullname string) {
 	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
 	case sql.ErrNoRows:
-		s.Logger.Printf("[DEBUG] User %s was not registered.", fullname)
+		s.Logger.Printf("[DEBUG] User %s was not registered.\n", fullname)
 	case nil:
 		sqlDelete := `
 		DELETE FROM hatcher.users
 		WHERE user_id = $1;`
-		_, err = database.DB.Exec(sqlDelete, userid)
-		if err != nil {
-			panic(err)
+		if _, err = database.DB.Exec(sqlDelete, userid); err != nil {
+			err = errors.Wrapf(err,
+				"Couldn't not check if user %s with ID %s exist in the database.\n", fullname, userid)
+			return
 		}
-		s.Logger.Printf("[DEBUG] User %s with id %s was deleted.", fullname, userid)
+		s.Logger.Printf("[DEBUG] User %s with id %s was deleted.\n", fullname, userid)
 	default:
 		panic(err)
 	}
@@ -222,9 +226,10 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) {
 		SET manager_id = $2
 		WHERE user_id = $1
 		RETURNING id;`
-		err = database.DB.QueryRow(sqlUpdate, userid, managerid).Scan(&userid)
-		if err != nil {
-			panic(err)
+		if err = database.DB.QueryRow(sqlUpdate, userid, managerid).Scan(&userid); err != nil {
+			err = errors.Wrapf(err,
+				"Couldn't update the manager %s for the user %s with ID %s.\n", managername, fullname, userid)
+			return
 		}
 		s.Logger.Printf("[DEBUG] Manager %s was added to user %s.\n", managername, fullname)
 	default:
@@ -283,16 +288,17 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
 	// if user doesnt exit, exit
 	case sql.ErrNoRows:
 		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
-	// If the user exist we update the column manager_id
+	// If the user exist we update the column is_manager
 	case nil:
 		sqlUpdate := `
 		UPDATE hatcher.users
 		SET is_manager = $2
 		WHERE user_id = $1
 		RETURNING id;`
-		err = database.DB.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid)
-		if err != nil {
-			panic(err)
+		if err = database.DB.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid); err != nil {
+			err = errors.Wrapf(err,
+				"Couldn't update if user %s with ID %s is a manager in the database.\n", fullname, userid)
+			return
 		}
 		if ismanager == "true" {
 			s.Logger.Printf("[DEBUG] %s is now setup as a manager.\n", fullname)
