@@ -14,7 +14,8 @@ jobs:
     - stage: build go
       script: make build
     - stage: build docker image
-      script: make build-docker
-      script: docker login -u $DOCKER_USER -p $DOCKER_PASS
-      script: make push
+      script: 
+        - make build-docker
+        - docker login -u $DOCKER_USER -p $DOCKER_PASS
+        - make push
 
