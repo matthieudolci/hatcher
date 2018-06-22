@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
 )
 
@@ -66,7 +67,7 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) {
 	var id string
 
 	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
-	row := db.QueryRow(sqlCheckID, userid)
+	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
 	// if user doesnt exit creates it in the database
 	case sql.ErrNoRows:
@@ -74,7 +75,7 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) {
 		INSERT INTO hatcher.users (user_id, email, full_name, displayname)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id`
-		err = db.QueryRow(sqlWrite, userid, email, fullname, displayname).Scan(&userid)
+		err = database.DB.QueryRow(sqlWrite, userid, email, fullname, displayname).Scan(&userid)
 		if err != nil {
 			panic(err)
 		}
@@ -86,7 +87,7 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) {
 		SET full_name = $2, email = $3, displayname = $4 
 		WHERE user_id = $1
 		RETURNING id;`
-		err = db.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid)
+		err = database.DB.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid)
 		if err != nil {
 			panic(err)
 		}
@@ -153,7 +154,7 @@ func (s *Slack) removeBot(userid, fullname string) {
 
 	// Check if the user already exist
 	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
-	row := db.QueryRow(sqlCheckID, userid)
+	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
 	case sql.ErrNoRows:
 		s.Logger.Printf("[DEBUG] User %s was not registered.", fullname)
@@ -161,7 +162,7 @@ func (s *Slack) removeBot(userid, fullname string) {
 		sqlDelete := `
 		DELETE FROM hatcher.users
 		WHERE user_id = $1;`
-		_, err = db.Exec(sqlDelete, userid)
+		_, err = database.DB.Exec(sqlDelete, userid)
 		if err != nil {
 			panic(err)
 		}
@@ -209,7 +210,7 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) {
 
 	// Check if the user already exist
 	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
-	row := db.QueryRow(sqlCheckID, userid)
+	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
 	// if user doesnt exit, exit
 	case sql.ErrNoRows:
@@ -221,7 +222,7 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) {
 		SET manager_id = $2
 		WHERE user_id = $1
 		RETURNING id;`
-		err = db.QueryRow(sqlUpdate, userid, managerid).Scan(&userid)
+		err = database.DB.QueryRow(sqlUpdate, userid, managerid).Scan(&userid)
 		if err != nil {
 			panic(err)
 		}
@@ -277,7 +278,7 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
 
 	// Check if the user already exist
 	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
-	row := db.QueryRow(sqlCheckID, userid)
+	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
 	// if user doesnt exit, exit
 	case sql.ErrNoRows:
@@ -289,7 +290,7 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
 		SET is_manager = $2
 		WHERE user_id = $1
 		RETURNING id;`
-		err = db.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid)
+		err = database.DB.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid)
 		if err != nil {
 			panic(err)
 		}

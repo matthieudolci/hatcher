@@ -1,4 +1,4 @@
-package bot
+package database
 
 import (
 	"database/sql"
@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
+var DB *sql.DB
 
 const (
 	dbhost = "DBHOST"
@@ -26,11 +26,11 @@ func InitDb() {
 		config[dbhost], config[dbport],
 		config[dbuser], config[dbpass], config[dbname])
 
-	db, err = sql.Open("postgres", psqlInfo)
+	DB, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	err = db.Ping()
+	err = DB.Ping()
 	if err != nil {
 		panic(err)
 	}

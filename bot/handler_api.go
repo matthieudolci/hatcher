@@ -9,7 +9,7 @@ import (
 )
 
 // NewHandler instantiaties the web handler for listening on the API
-func (s *Slack) NewHandler() (http.Handler, error) {
+func (s *Slack) ApiHandler() (http.Handler, error) {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)

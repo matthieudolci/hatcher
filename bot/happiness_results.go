@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/matthieudolci/hatcher/database"
 )
 
 type resultSummary struct {
@@ -47,7 +49,7 @@ func surveyResultsUserDayHandler(w http.ResponseWriter, r *http.Request) {
 
 func surveyResultsUserDay(res *results, userid, date string) error {
 
-	rows, err := db.Query(`
+	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
 			happiness.result,
@@ -112,7 +114,7 @@ func surveyResultsUserAllHandler(w http.ResponseWriter, r *http.Request) {
 
 func surveyResultsUserAll(res *results, userid string) error {
 
-	rows, err := db.Query(`
+	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
 			happiness.result,
@@ -177,7 +179,7 @@ func surveyResultsUserBetweenDatesHandler(w http.ResponseWriter, r *http.Request
 
 func surveyResultsUserBetweenDates(res *results, userid, date1, date2 string) error {
 
-	rows, err := db.Query(`
+	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
 			happiness.result,
@@ -237,7 +239,7 @@ func surveyResultsAllHandler(w http.ResponseWriter, r *http.Request) {
 
 func surveyResultsAll(res *results) error {
 
-	rows, err := db.Query(`
+	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
 			happiness.result,
@@ -301,7 +303,7 @@ func surveyResultsAllUserBetweenDatesHandler(w http.ResponseWriter, r *http.Requ
 
 func surveyResultsAllUserBetweenDates(res *results, date1, date2 string) error {
 
-	rows, err := db.Query(`
+	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
 			happiness.result,

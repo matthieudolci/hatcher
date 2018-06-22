@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/matthieudolci/hatcher/database"
 )
 
 type userSummary struct {
@@ -41,18 +43,7 @@ func getAllUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 func getAllUsers(u *users) error {
 
-	config := dbConfig()
-
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(`
+	rows, err := database.DB.Query(`
 		SELECT
 			user_id,
 			full_name,
@@ -115,18 +106,7 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 
 func getUser(u *users, userid string) error {
 
-	config := dbConfig()
-
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-
-	rows, err := db.Query(`
+	rows, err := database.DB.Query(`
 		SELECT
 			user_id,
 			full_name,

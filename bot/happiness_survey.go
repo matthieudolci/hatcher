@@ -1,10 +1,10 @@
 package bot
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
+	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
 )
 
@@ -66,25 +66,12 @@ func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 
 func (s *Slack) resultHappinessSurvey(userid, result string) {
 
-	config := dbConfig()
-
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		config[dbhost], config[dbport], config[dbuser], config[dbpass], config[dbname])
-
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
-	}
-
-	defer db.Close()
-
 	sqlWrite := `
 	INSERT INTO hatcher.happiness (user_id, result)
 	VALUES ($1, $2)
 	RETURNING id`
 
-	err = db.QueryRow(sqlWrite, userid, result).Scan(&userid)
+	err := database.DB.QueryRow(sqlWrite, userid, result).Scan(&userid)
 	if err != nil {
 		panic(err)
 	}

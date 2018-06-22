@@ -10,11 +10,12 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/matthieudolci/hatcher/bot"
+	"github.com/matthieudolci/hatcher/database"
 )
 
 func main() {
-	db := InitDb()
-	defer db.Close()
+	database.InitDb()
+	defer database.DB.Close()
 
 	lg := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	ctx := context.Background()
@@ -29,7 +30,7 @@ func main() {
 		s.Logger.Fatal(err)
 	}
 
-	handler, err := s.NewHandler()
+	handler, err := s.ApiHandler()
 	if err != nil {
 		s.Logger.Fatal(err)
 	}
