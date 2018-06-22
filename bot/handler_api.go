@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/cors"
 )
 
-// NewHandler instantiaties the web handler for listening on the API
-func (s *Slack) ApiHandler() (http.Handler, error) {
+// APIHandler instantiaties the web handler for listening on the API
+func (s *Slack) APIHandler() (http.Handler, error) {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)

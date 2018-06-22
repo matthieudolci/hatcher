@@ -30,7 +30,7 @@ func main() {
 		s.Logger.Fatal(err)
 	}
 
-	handler, err := s.ApiHandler()
+	handler, err := s.APIHandler()
 	if err != nil {
 		s.Logger.Fatal(err)
 	}
