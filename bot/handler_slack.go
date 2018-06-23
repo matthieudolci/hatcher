@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/nlopes/slack"
@@ -26,34 +25,8 @@ type Slack struct {
 	MessageEvent *slack.MessageEvent
 }
 
-// PostMap is a global map to handle callbacks depending on the provided user
-// This mapping stores off the userID to reply to
-var PostMap map[string]string
-
-// PostLock is the complement for the global PostMap to ensure concurrent
-// access doesn't race
-var PostLock sync.RWMutex
-
-func slackHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if r.URL.Path != "/slack" {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(fmt.Sprintf("incorrect path: %s", r.URL.Path)))
-		return
-	}
-
-	switch r.Method {
-	case "GET":
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("%v", `¯\_(ツ)_/¯ GET`)))
-		return
-	case "POST":
-		w.WriteHeader(http.StatusMovedPermanently)
-		w.Write([]byte("cannot post to this endpoint"))
-		return
-	default:
-	}
-}
-
+// Listen on /slack for answer from the questions asked in bot_setup.go
+// and dispatch to the good functions
 func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	if r.URL.Path != "/slack" {
@@ -163,7 +136,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			fmt.Printf("%s\n", err)
 			return
 		}
-		managername := fmt.Sprintf(manager.Profile.DisplayName)
+		managername := fmt.Sprintf(manager.RealName)
 		s.initManager(userid, fullname, managerid, managername)
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager.", managername)))
 		s.askIfManager(channelid, userid)

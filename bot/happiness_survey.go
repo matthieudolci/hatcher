@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Ask how the users are doing
 func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 	text := ev.Text
 	text = strings.TrimSpace(text)

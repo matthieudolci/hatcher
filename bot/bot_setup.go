@@ -61,7 +61,7 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 }
 
 // initBot is the first step of using this bot.
-// It will insert the user informations inside the databse to allow us
+// It will insert the user informations inside the database allowing us
 // to use them
 func (s *Slack) initBot(userid, email, fullname, displayname string) {
 
@@ -100,6 +100,7 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) {
 	}
 }
 
+// Ask if we want to remove our user from the bot
 func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 	text := ev.Text
 	text = strings.TrimSpace(text)
@@ -150,7 +151,7 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 	return nil
 }
 
-// removeBot remove the user from the database
+// removeBot remove the user from the bot/database
 func (s *Slack) removeBot(userid, fullname string) {
 
 	var id string
@@ -176,6 +177,7 @@ func (s *Slack) removeBot(userid, fullname string) {
 	}
 }
 
+// Ask who is the user manager
 func (s *Slack) askWhoIsManager(channelid, userid string) error {
 
 	params := slack.PostMessageParameters{}
@@ -208,6 +210,7 @@ func (s *Slack) askWhoIsManager(channelid, userid string) error {
 	return nil
 }
 
+// Add the person select previously in askWhoIsManager to the user profile
 func (s *Slack) initManager(userid, fullname, managerid, managername string) {
 
 	var id string
@@ -237,6 +240,7 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) {
 	}
 }
 
+// Ask if the user if a manager
 func (s *Slack) askIfManager(channelid, userid string) error {
 
 	params := slack.PostMessageParameters{}
@@ -277,6 +281,7 @@ func (s *Slack) askIfManager(channelid, userid string) error {
 	return nil
 }
 
+// Setup the user as a manager or not in the database
 func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
 
 	var id string

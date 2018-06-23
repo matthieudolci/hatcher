@@ -11,7 +11,6 @@ func (s *Slack) APIHandler() (http.Handler, error) {
 
 	router := httprouter.New()
 
-	router.GET("/slack", slackHandler)
 	router.POST("/slack", s.slackPostHandler)
 	router.GET("/api/happiness/userdate/:userid/:date", surveyResultsUserDayHandler)
 	router.GET("/api/happiness/userallresults/:userid", surveyResultsUserAllHandler)
