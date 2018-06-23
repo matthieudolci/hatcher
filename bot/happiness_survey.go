@@ -70,7 +70,7 @@ func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 func (s *Slack) resultHappinessSurvey(userid, result string) {
 
 	sqlWrite := `
-	INSERT INTO hatcher.happiness (user_id, result)
+	INSERT INTO hatcher.happiness (user_id, results)
 	VALUES ($1, $2)
 	RETURNING id`
 

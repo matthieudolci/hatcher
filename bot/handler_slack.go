@@ -83,21 +83,21 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	case "happinessGood":
 		answer := fmt.Sprintf(payload.Actions[0].Value)
 		if answer == "happinessGood" {
-			value := fmt.Sprintf("good")
+			value := fmt.Sprintf("3")
 			s.resultHappinessSurvey(userid, value)
 			w.Write([]byte("Awesome, have a wonderful day!"))
 		}
 	case "happinessNeutral":
 		answer := fmt.Sprintf(payload.Actions[0].Value)
 		if answer == "happinessNeutral" {
-			value := fmt.Sprintf("neutral")
+			value := fmt.Sprintf("2")
 			s.resultHappinessSurvey(userid, value)
 			w.Write([]byte("I hope your day will get better :slightly_smiling_face:"))
 		}
 	case "happinessSad":
 		answer := fmt.Sprintf(payload.Actions[0].Value)
 		if answer == "happinessSad" {
-			value := fmt.Sprintf("sad")
+			value := fmt.Sprintf("1")
 			s.resultHappinessSurvey(userid, value)
 			w.Write([]byte("I am sorry to hear that. Take all the time you need to feel better."))
 		}

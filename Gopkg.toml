@@ -24,15 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[[constraint]]
-  name = "github.com/go-chi/chi"
-  version = "3.3.2"
-
-[[constraint]]
-  name = "github.com/go-chi/cors"
-  version = "1.0.0"
-
 [[constraint]]
   branch = "master"
   name = "github.com/lib/pq"

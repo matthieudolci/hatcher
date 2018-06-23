@@ -1,3 +1,29 @@
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET row_security = off;
+
+CREATE DATABASE hatcher WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.utf8' LC_CTYPE = 'en_US.utf8';
+
+ALTER DATABASE hatcher OWNER TO postgres;
+
+\connect hatcher
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET row_security = off;
+
 CREATE SCHEMA hatcher;
 
 ALTER SCHEMA hatcher OWNER TO postgres;
@@ -13,11 +39,10 @@ SET default_with_oids = false;
 
 CREATE TABLE hatcher.happiness (
     user_id text,
-    result text,
     id integer NOT NULL,
-    date date DEFAULT CURRENT_DATE NOT NULL
+    date date DEFAULT CURRENT_DATE NOT NULL,
+    results integer DEFAULT '0'::integer
 );
-
 
 ALTER TABLE hatcher.happiness OWNER TO postgres;
 
@@ -29,7 +54,6 @@ CREATE SEQUENCE hatcher.happiness_id_seq
     NO MAXVALUE
     CACHE 1;
 
-
 ALTER TABLE hatcher.happiness_id_seq OWNER TO postgres;
 
 ALTER SEQUENCE hatcher.happiness_id_seq OWNED BY hatcher.happiness.id;
@@ -40,10 +64,9 @@ CREATE TABLE hatcher.users (
     email text,
     full_name text,
     manager_id text,
-    displayname text,
-    is_manager boolean DEFAULT false
+    is_manager boolean DEFAULT false,
+    displayname text COLLATE pg_catalog."en_US.utf8"
 );
-
 
 ALTER TABLE hatcher.users OWNER TO postgres;
 
@@ -54,7 +77,6 @@ CREATE SEQUENCE hatcher.users_id_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
 
 ALTER TABLE hatcher.users_id_seq OWNER TO postgres;
 
