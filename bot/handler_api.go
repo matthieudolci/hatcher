@@ -3,39 +3,23 @@ package bot
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/cors"
+	"github.com/julienschmidt/httprouter"
 )
 
 // APIHandler instantiaties the web handler for listening on the API
 func (s *Slack) APIHandler() (http.Handler, error) {
-	r := chi.NewRouter()
 
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
+	router := httprouter.New()
 
-	r.Use(middleware.NoCache)
-	r.Use(middleware.Heartbeat("/ping"))
+	router.GET("/slack", slackHandler)
+	router.POST("/slack", s.slackPostHandler)
+	router.GET("/api/happiness/userdate/:userid/:date", surveyResultsUserDayHandler)
+	router.GET("/api/happiness/userallresults/:userid", surveyResultsUserAllHandler)
+	router.GET("/api/happiness/userdates/:userid/:date1/:date2", surveyResultsUserBetweenDatesHandler)
+	router.GET("/api/happiness/usersallresults/:date1/:date2", surveyResultsAllUserBetweenDatesHandler)
+	router.GET("/api/happiness/all/results", surveyResultsAllHandler)
+	router.GET("/api/slack/allusers", getAllUsersHandler)
+	router.GET("/api/slack/user/:userid", getUserHandler)
 
-	cors := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	})
-	r.Use(cors.Handler)
-
-	r.Get("/slack", slackHandler)
-	r.Post("/slack", s.slackPostHandler)
-	r.Get("/api/happiness/results/date/*/*", surveyResultsUserDayHandler)
-	r.Get("/api/happiness/results/all/user/*", surveyResultsUserAllHandler)
-	r.Get("/api/happiness/results/dates/*/*/*", surveyResultsUserBetweenDatesHandler)
-	r.Get("/api/happiness/results/dates/all/*/*", surveyResultsAllUserBetweenDatesHandler)
-	r.Get("/api/happiness/results/all", surveyResultsAllHandler)
-	r.Get("/api/slack/users/all", getAllUsersHandler)
-	r.Get("/api/slack/users/*", getUserHandler)
-
-	return r, nil
+	return router, nil
 }

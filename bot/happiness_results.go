@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/matthieudolci/hatcher/database"
 )
 
@@ -22,17 +23,14 @@ type results struct {
 	Results []resultSummary
 }
 
-func surveyResultsUserDayHandler(w http.ResponseWriter, r *http.Request) {
+func surveyResultsUserDayHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	res := results{}
 
-	params, err := parse2Params(r, "/api/happiness/results/date/", 2)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
+	userid := ps.ByName("userid")
+	date := ps.ByName("date")
 
-	err = surveyResultsUserDay(&res, params[0], params[1])
+	err := surveyResultsUserDay(&res, userid, date)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -87,19 +85,15 @@ func surveyResultsUserDay(res *results, userid, date string) error {
 	return nil
 }
 
-func surveyResultsUserAllHandler(w http.ResponseWriter, r *http.Request) {
+func surveyResultsUserAllHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	res := results{}
 
-	params, err := parse1Params(r, "/api/happiness/results/all/user/", 1)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
+	userid := ps.ByName("userid")
 
-	err2 := surveyResultsUserAll(&res, params[0])
-	if err2 != nil {
-		http.Error(w, err2.Error(), 500)
+	err := surveyResultsUserAll(&res, userid)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
 		return
 	}
 
@@ -152,17 +146,15 @@ func surveyResultsUserAll(res *results, userid string) error {
 	return nil
 }
 
-func surveyResultsUserBetweenDatesHandler(w http.ResponseWriter, r *http.Request) {
+func surveyResultsUserBetweenDatesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	res := results{}
 
-	params, err := parse3Params(r, "/api/happiness/results/dates/", 3)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
+	userid := ps.ByName("userid")
+	date1 := ps.ByName("date1")
+	date2 := ps.ByName("date2")
 
-	err2 := surveyResultsUserBetweenDates(&res, params[0], params[1], params[2])
+	err2 := surveyResultsUserBetweenDates(&res, userid, date1, date2)
 	if err2 != nil {
 		http.Error(w, err2.Error(), 500)
 		return
@@ -218,7 +210,7 @@ func surveyResultsUserBetweenDates(res *results, userid, date1, date2 string) er
 	return nil
 }
 
-func surveyResultsAllHandler(w http.ResponseWriter, r *http.Request) {
+func surveyResultsAllHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	res := results{}
 
@@ -276,19 +268,16 @@ func surveyResultsAll(res *results) error {
 	return nil
 }
 
-func surveyResultsAllUserBetweenDatesHandler(w http.ResponseWriter, r *http.Request) {
+func surveyResultsAllUserBetweenDatesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	res := results{}
 
-	params, err := parse2Params(r, "/api/happiness/results/dates/all/", 2)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
+	date1 := ps.ByName("date1")
+	date2 := ps.ByName("date2")
 
-	err2 := surveyResultsAllUserBetweenDates(&res, params[0], params[1])
-	if err2 != nil {
-		http.Error(w, err2.Error(), 500)
+	err := surveyResultsAllUserBetweenDates(&res, date1, date2)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
 		return
 	}
 

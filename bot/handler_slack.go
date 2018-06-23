@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/nlopes/slack"
 )
 
@@ -33,7 +34,7 @@ var PostMap map[string]string
 // access doesn't race
 var PostLock sync.RWMutex
 
-func slackHandler(w http.ResponseWriter, r *http.Request) {
+func slackHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if r.URL.Path != "/slack" {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(fmt.Sprintf("incorrect path: %s", r.URL.Path)))
@@ -53,7 +54,7 @@ func slackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	if r.URL.Path != "/slack" {
 		w.WriteHeader(http.StatusNotFound)

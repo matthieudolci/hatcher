@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
+
 	"github.com/matthieudolci/hatcher/database"
 )
 
@@ -22,7 +24,7 @@ type users struct {
 	Users []userSummary
 }
 
-func getAllUsersHandler(w http.ResponseWriter, r *http.Request) {
+func getAllUsersHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	u := users{}
 
@@ -79,17 +81,13 @@ func getAllUsers(u *users) error {
 	return nil
 }
 
-func getUserHandler(w http.ResponseWriter, r *http.Request) {
+func getUserHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	u := users{}
 
-	params, err := parse1Params(r, "/api/slack/users/", 1)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
+	userid := ps.ByName("userid")
 
-	err = getUser(&u, params[0])
+	err := getUser(&u, userid)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
