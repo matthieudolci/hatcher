@@ -8,6 +8,12 @@
   version = "v1.2.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/jasonlvhit/gocron"
+  packages = ["."]
+  revision = "54194c9749d48b073c9aeb2c787b6882e95dd0cd"
+
+[[projects]]
   name = "github.com/julienschmidt/httprouter"
   packages = ["."]
   revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
@@ -37,6 +43,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "732334a5ece10bb426f32d984122c4f704edf950cc1bcb37100d69c807488bba"
+  inputs-digest = "7249f148dc672420952555c1f5cb13103828feac26a74eb7621bb0a33317d4a3"
   solver-name = "gps-cdcl"
   solver-version = 1

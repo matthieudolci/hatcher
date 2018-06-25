@@ -7,7 +7,6 @@ import (
 
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
-	"github.com/pkg/errors"
 )
 
 func (s *Slack) askSetup(ev *slack.MessageEvent) error {
@@ -76,10 +75,9 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) {
 		INSERT INTO hatcher.users (user_id, email, full_name, displayname)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id`
-		if err = database.DB.QueryRow(sqlWrite, userid, email, fullname, displayname).Scan(&userid); err != nil {
-			err = errors.Wrapf(err,
-				"Couldn't create user %s with ID %s in the database.\n", fullname, userid)
-			return
+		err = database.DB.QueryRow(sqlWrite, userid, email, fullname, displayname).Scan(&userid)
+		if err != nil {
+			s.Logger.Printf("[ERROR] Could not create user %s.\n %s", fullname, err)
 		}
 		s.Logger.Printf("[DEBUG] User (%s) was created.\n", fullname)
 	// If the user exist it will update it
@@ -89,10 +87,9 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) {
 		SET full_name = $2, email = $3, displayname = $4 
 		WHERE user_id = $1
 		RETURNING id;`
-		if err = database.DB.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid); err != nil {
-			err = errors.Wrapf(err,
-				"Couldn't update user %s with ID %s in the database.\n", fullname, userid)
-			return
+		err = database.DB.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid)
+		if err != nil {
+			s.Logger.Printf("[ERROR] Couldn't update user %s with ID %s in the database.\n %s", fullname, userid, err)
 		}
 		s.Logger.Printf("[DEBUG] User (%s) was updated.\n", fullname)
 	default:
@@ -166,10 +163,9 @@ func (s *Slack) removeBot(userid, fullname string) {
 		sqlDelete := `
 		DELETE FROM hatcher.users
 		WHERE user_id = $1;`
-		if _, err = database.DB.Exec(sqlDelete, userid); err != nil {
-			err = errors.Wrapf(err,
-				"Couldn't not check if user %s with ID %s exist in the database.\n", fullname, userid)
-			return
+		_, err = database.DB.Exec(sqlDelete, userid)
+		if err != nil {
+			s.Logger.Printf("[ERROR] Couldn't not check if user %s with ID %s exist in the database.\n %s", fullname, userid, err)
 		}
 		s.Logger.Printf("[DEBUG] User %s with id %s was deleted.\n", fullname, userid)
 	default:
@@ -229,10 +225,9 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) {
 		SET manager_id = $2
 		WHERE user_id = $1
 		RETURNING id;`
-		if err = database.DB.QueryRow(sqlUpdate, userid, managerid).Scan(&userid); err != nil {
-			err = errors.Wrapf(err,
-				"Couldn't update the manager %s for the user %s with ID %s.\n", managername, fullname, userid)
-			return
+		err = database.DB.QueryRow(sqlUpdate, userid, managerid).Scan(&userid)
+		if err != nil {
+			s.Logger.Printf("[ERROR] Couldn't update the manager %s for the user %s with ID %s.\n %s", managername, fullname, userid, err)
 		}
 		s.Logger.Printf("[DEBUG] Manager %s was added to user %s.\n", managername, fullname)
 	default:
@@ -300,15 +295,99 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) {
 		SET is_manager = $2
 		WHERE user_id = $1
 		RETURNING id;`
-		if err = database.DB.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid); err != nil {
-			err = errors.Wrapf(err,
-				"Couldn't update if user %s with ID %s is a manager in the database.\n", fullname, userid)
-			return
+		err = database.DB.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid)
+		if err != nil {
+			s.Logger.Printf("[ERROR] Couldn't update if user %s with ID %s is a manager in the database.\n %s", fullname, userid, err)
 		}
 		if ismanager == "true" {
 			s.Logger.Printf("[DEBUG] %s is now setup as a manager.\n", fullname)
 		} else {
 			s.Logger.Printf("[DEBUG] %s is not a manager.\n", fullname)
+		}
+
+	default:
+		panic(err)
+	}
+}
+
+// Ask what time the happiness survey should be send
+func (s *Slack) askTimeHappinessSurvey(channelid, userid string) error {
+
+	params := slack.PostMessageParameters{}
+	attachment := slack.Attachment{
+		Text:       "What time do you want the happiness survey to happen?",
+		CallbackID: fmt.Sprintf("happTime_%s", userid),
+		Color:      "#AED6F1",
+		Actions: []slack.AttachmentAction{
+			{
+				Name: "HappinessTime",
+				Type: "select",
+				Options: []slack.AttachmentActionOption{
+					{
+						Text:  "09:00",
+						Value: "09:00",
+					},
+					{
+						Text:  "09:30",
+						Value: "09:30",
+					},
+					{
+						Text:  "10:00",
+						Value: "10:00",
+					},
+					{
+						Text:  "10:30",
+						Value: "10:30",
+					},
+					{
+						Text:  "11:00",
+						Value: "11:00",
+					},
+					{
+						Text:  "11:30",
+						Value: "11:30",
+					},
+				},
+			},
+		},
+	}
+	params.Attachments = []slack.Attachment{attachment}
+	params.User = userid
+	params.AsUser = true
+
+	_, err := s.Client.PostEphemeral(
+		channelid,
+		userid,
+		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionPostMessageParameters(params),
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Insert in the database the result of askTimeHappinessSurvey
+func (s *Slack) insertTimeHappinessSurvey(userid, fullname, time string) {
+
+	var id string
+
+	// Check if the user already exist
+	sqlCheckID := `SELECT user_id FROM hatcher.users WHERE user_id=$1;`
+	row := database.DB.QueryRow(sqlCheckID, userid)
+	switch err := row.Scan(&id); err {
+	// if user doesnt exit, exit
+	case sql.ErrNoRows:
+		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
+	// If the user exist we update the column is_manager
+	case nil:
+		sqlUpdate := `
+		UPDATE hatcher.users
+		SET happiness_schedule = $2
+		WHERE user_id = $1;`
+		err = database.DB.QueryRow(sqlUpdate, userid, time).Scan(&userid)
+		if err != nil {
+			s.Logger.Printf("[ERROR] Couldn't update the time of the happiness survey for user %s with ID %s.\n", fullname, userid, err)
 		}
 
 	default:

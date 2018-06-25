@@ -3,11 +3,26 @@ package bot
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
 	"github.com/nlopes/slack"
 )
+
+// Slack is the primary struct for our slackbot
+type Slack struct {
+	Name  string
+	Token string
+
+	User   string
+	UserID string
+
+	Logger *log.Logger
+
+	Client       *slack.Client
+	MessageEvent *slack.MessageEvent
+}
 
 // New returns a new instance of the Slack struct, primary for our slackbot
 func New() (*Slack, error) {
@@ -35,6 +50,7 @@ func (s *Slack) Run(ctx context.Context) error {
 
 	go s.run(ctx)
 	return nil
+
 }
 
 func (s *Slack) run(ctx context.Context) {
@@ -45,6 +61,7 @@ func (s *Slack) run(ctx context.Context) {
 	go rtm.ManageConnection()
 
 	s.Logger.Printf("[INFO] now listening for incoming messages...")
+
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
@@ -54,8 +71,9 @@ func (s *Slack) run(ctx context.Context) {
 
 			// check if we have a DM, or standard channel post
 			direct := strings.HasPrefix(ev.Msg.Channel, "D")
+			inchannel := strings.Contains(ev.Msg.Text, "@"+s.UserID)
 
-			if !direct && !strings.Contains(ev.Msg.Text, "@"+s.UserID) {
+			if !direct && !inchannel {
 				// msg not for us!
 				continue
 			}

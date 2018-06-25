@@ -9,7 +9,7 @@ services:
       - POSTGRES_USER=hatcher
     volumes:
       - ./.docker-data/pg:/var/lib/postgresql/data/
-      - ./sql/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
       - 5432:5432
 

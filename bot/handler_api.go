@@ -19,6 +19,5 @@ func (s *Slack) APIHandler() (http.Handler, error) {
 	router.GET("/api/happiness/all/results", surveyResultsAllHandler)
 	router.GET("/api/slack/allusers", getAllUsersHandler)
 	router.GET("/api/slack/user/:userid", getUserHandler)
-
 	return router, nil
 }

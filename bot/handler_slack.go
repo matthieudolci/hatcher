@@ -3,27 +3,12 @@ package bot
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/nlopes/slack"
 )
-
-// Slack is the primary struct for our slackbot
-type Slack struct {
-	Name  string
-	Token string
-
-	User   string
-	UserID string
-
-	Logger *log.Logger
-
-	Client       *slack.Client
-	MessageEvent *slack.MessageEvent
-}
 
 // Listen on /slack for answer from the questions asked in bot_setup.go
 // and dispatch to the good functions
@@ -70,6 +55,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	api := slack.New(s.Token)
 	userid := fmt.Sprintf(payload.User.ID)
 	user, err := api.GetUserInfo(userid)
+
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		return
@@ -78,7 +64,6 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	displayname := fmt.Sprintf(user.Profile.DisplayName)
 	email := fmt.Sprintf(user.Profile.Email)
 	channelid := fmt.Sprintf(payload.Channel.ID)
-
 	switch value {
 	case "happinessGood":
 		answer := fmt.Sprintf(payload.Actions[0].Value)
@@ -117,14 +102,14 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		if answer == "isManagerYes" {
 			value := fmt.Sprintf("true")
 			s.setupIsManager(userid, fullname, value)
-			w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!", displayname)))
+			w.Write([]byte(fmt.Sprintf(":white_check_mark: - You are setup as a manager.")))
 		}
 	case "isManagerNo":
 		answer := fmt.Sprintf(payload.Actions[0].Value)
 		if answer == "isManagerNo" {
 			value := fmt.Sprintf("false")
 			s.setupIsManager(userid, fullname, value)
-			w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!", displayname)))
+			w.Write([]byte(fmt.Sprintf(":white_check_mark: - You are not setup as a manager.")))
 		}
 	}
 
@@ -140,6 +125,16 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		s.initManager(userid, fullname, managerid, managername)
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager.", managername)))
 		s.askIfManager(channelid, userid)
+	case "isManagerYes", "isManagerNo":
+		err := s.askTimeHappinessSurvey(channelid, userid)
+		if err != nil {
+			fmt.Printf("%s\n", err)
+			return
+		}
+	case "HappinessTime":
+		time := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
+		s.insertTimeHappinessSurvey(userid, fullname, time)
+		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!", displayname)))
 	}
 
 	w.WriteHeader(http.StatusOK)

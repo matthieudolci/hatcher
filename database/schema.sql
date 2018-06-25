@@ -8,10 +8,6 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
-CREATE DATABASE hatcher WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.utf8' LC_CTYPE = 'en_US.utf8';
-
-ALTER DATABASE hatcher OWNER TO postgres;
-
 \connect hatcher
 
 SET statement_timeout = 0;
@@ -65,7 +61,8 @@ CREATE TABLE hatcher.users (
     full_name text,
     manager_id text,
     is_manager boolean DEFAULT false,
-    displayname text COLLATE pg_catalog."en_US.utf8"
+    displayname text COLLATE pg_catalog."en_US.utf8",
+    happiness_schedule TIME
 );
 
 ALTER TABLE hatcher.users OWNER TO postgres;

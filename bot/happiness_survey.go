@@ -1,15 +1,16 @@
 package bot
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
+	"github.com/jasonlvhit/gocron"
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
-	"github.com/pkg/errors"
 )
 
-// Ask how the users are doing
+// Ask how are the users doing
 func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 	text := ev.Text
 	text = strings.TrimSpace(text)
@@ -74,11 +75,96 @@ func (s *Slack) resultHappinessSurvey(userid, result string) {
 	VALUES ($1, $2)
 	RETURNING id`
 
-	if err := database.DB.QueryRow(sqlWrite, userid, result).Scan(&userid); err != nil {
-		err = errors.Wrapf(err,
-			"Couldn't insert in the database the result of the happiness survey for user ID %s.\n", userid)
-		return
+	err := database.DB.QueryRow(sqlWrite, userid, result).Scan(&userid)
+	if err != nil {
+		s.Logger.Printf("[ERROR] Couldn't insert in the database the result of the happiness survey for user ID %s.\n %s", userid, err)
+	}
+	s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
+}
+
+//
+func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
+	type ScheduleData struct {
+		Time   string
+		UserID string
 	}
 
-	s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
+	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH:MM'), user_id FROM hatcher.users;")
+	if err != nil {
+		if err == sql.ErrNoRows {
+			s.Logger.Printf("[ERROR] There is no result time or user_id.\n")
+		} else {
+			panic(err)
+		}
+	}
+	defer rows.Close()
+	for rows.Next() {
+		scheduledata := ScheduleData{}
+		err = rows.Scan(&scheduledata.Time, &scheduledata.UserID)
+		if err != nil {
+			s.Logger.Printf("[ERROR] During the scan.\n")
+		}
+		fmt.Println(scheduledata)
+		s.runHappinessSurveySchedule(scheduledata.UserID)
+	}
+	// get any error encountered during iteration
+	err = rows.Err()
+	if err != nil {
+		s.Logger.Printf("[ERROR] During iteration.\n")
+	}
+	return nil
+}
+
+//
+func (s *Slack) runHappinessSurveySchedule(userid string) {
+	x := s.askHappinessSurveyScheduled(userid)
+	w := gocron.NewScheduler()
+	w.Every(5).Seconds().Do(x)
+	<-w.Start()
+}
+
+// Ask how are the users doing
+func (s *Slack) askHappinessSurveyScheduled(userid string) error {
+
+	_, _, channelid, _ := s.Client.OpenIMChannel(userid)
+	params := slack.PostMessageParameters{}
+	attachment := slack.Attachment{
+		Text:       "How are you today?",
+		CallbackID: fmt.Sprintf("ask_%s", userid),
+		Color:      "#AED6F1",
+		Actions: []slack.AttachmentAction{
+			slack.AttachmentAction{
+				Name:  "happinessGood",
+				Text:  ":smiley:",
+				Type:  "button",
+				Value: "happinessGood",
+			},
+			slack.AttachmentAction{
+				Name:  "happinessNeutral",
+				Text:  ":neutral_face:",
+				Type:  "button",
+				Value: "happinessNeutral",
+			},
+			slack.AttachmentAction{
+				Name:  "happinessSad",
+				Text:  ":cry:",
+				Type:  "button",
+				Value: "happinessSad",
+			},
+		},
+	}
+	params.Attachments = []slack.Attachment{attachment}
+	params.User = userid
+	params.AsUser = true
+
+	_, err := s.Client.PostEphemeral(
+		channelid,
+		userid,
+		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionPostMessageParameters(params),
+	)
+	if err != nil {
+		return nil
+	}
+	return nil
 }
