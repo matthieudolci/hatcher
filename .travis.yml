@@ -5,7 +5,7 @@ services:
 
 stages:
   - name: build go
-    if: branch != master
+    if: (tag IS blank) AND (branch != master)
   - name: build docker latest
     if: (NOT type IN (pull_request)) AND (branch = master)
   - name: build docker tag
