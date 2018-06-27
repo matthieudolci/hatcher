@@ -3,9 +3,12 @@ package bot
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
+	"time"
 
 	"github.com/jasonlvhit/gocron"
+
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
 )
@@ -82,14 +85,14 @@ func (s *Slack) resultHappinessSurvey(userid, result string) {
 	s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
 }
 
-//
+// GetTimeAndUsersHappinessSurvey gets the time selected by a user for the Happiness survey
 func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 	type ScheduleData struct {
-		Time   string
+		Times  string
 		UserID string
 	}
 
-	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH:MM'), user_id FROM hatcher.users;")
+	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH:MI'), user_id FROM hatcher.users;")
 	if err != nil {
 		if err == sql.ErrNoRows {
 			s.Logger.Printf("[ERROR] There is no result time or user_id.\n")
@@ -100,13 +103,15 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 	defer rows.Close()
 	for rows.Next() {
 		scheduledata := ScheduleData{}
-		err = rows.Scan(&scheduledata.Time, &scheduledata.UserID)
+		err = rows.Scan(&scheduledata.Times, &scheduledata.UserID)
 		if err != nil {
 			s.Logger.Printf("[ERROR] During the scan.\n")
 		}
 		fmt.Println(scheduledata)
-		s.runHappinessSurveySchedule(scheduledata.UserID)
+		s.runHappinessSurveySchedule(scheduledata.Times, scheduledata.UserID)
 	}
+	channel := make(chan int)
+	go startCron(channel)
 	// get any error encountered during iteration
 	err = rows.Err()
 	if err != nil {
@@ -115,12 +120,21 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 	return nil
 }
 
-//
-func (s *Slack) runHappinessSurveySchedule(userid string) {
-	x := s.askHappinessSurveyScheduled(userid)
-	w := gocron.NewScheduler()
-	w.Every(5).Seconds().Do(x)
-	<-w.Start()
+// Runs the job askHappinessSurveyScheduled at a time defined by the user
+func (s *Slack) runHappinessSurveySchedule(times, userid string) {
+	location, err := time.LoadLocation("America/Vancouver")
+	if err != nil {
+		log.Println("Unfortunately can't load a location")
+		log.Println(err)
+	} else {
+		gocron.ChangeLoc(location)
+	}
+	gocron.Every(1).Day().At(times).Do(s.askHappinessSurveyScheduled, userid)
+}
+
+// Starts gocron
+func startCron(channel chan int) {
+	<-gocron.Start()
 }
 
 // Ask how are the users doing
@@ -164,7 +178,8 @@ func (s *Slack) askHappinessSurveyScheduled(userid string) error {
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
-		return nil
+		return err
 	}
+	fmt.Printf("Scheduled happyness survey for user %s posted", userid)
 	return nil
 }

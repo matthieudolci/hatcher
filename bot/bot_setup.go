@@ -15,8 +15,9 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 	text = strings.ToLower(text)
 
 	acceptedSetup := map[string]bool{
+		"hello": true,
+		"hi":    true,
 		"setup": true,
-		"init":  true,
 	}
 
 	if acceptedSetup[text] {
@@ -328,24 +329,48 @@ func (s *Slack) askTimeHappinessSurvey(channelid, userid string) error {
 						Value: "09:00",
 					},
 					{
+						Text:  "09:15",
+						Value: "09:15",
+					},
+					{
 						Text:  "09:30",
 						Value: "09:30",
+					},
+					{
+						Text:  "09:45",
+						Value: "09:45",
 					},
 					{
 						Text:  "10:00",
 						Value: "10:00",
 					},
 					{
+						Text:  "10:15",
+						Value: "10:15",
+					},
+					{
 						Text:  "10:30",
 						Value: "10:30",
+					},
+					{
+						Text:  "10:45",
+						Value: "10:45",
 					},
 					{
 						Text:  "11:00",
 						Value: "11:00",
 					},
 					{
+						Text:  "11:15",
+						Value: "11:15",
+					},
+					{
 						Text:  "11:30",
 						Value: "11:30",
+					},
+					{
+						Text:  "11:45",
+						Value: "11:45",
 					},
 				},
 			},
@@ -385,9 +410,9 @@ func (s *Slack) insertTimeHappinessSurvey(userid, fullname, time string) {
 		UPDATE hatcher.users
 		SET happiness_schedule = $2
 		WHERE user_id = $1;`
-		err = database.DB.QueryRow(sqlUpdate, userid, time).Scan(&userid)
+		err = database.DB.QueryRow(sqlUpdate, userid, time).Scan(&id)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Couldn't update the time of the happiness survey for user %s with ID %s.\n", fullname, userid, err)
+			s.Logger.Printf("[ERROR] Couldn't update the time of the happiness survey for user %s with ID %s.\n %s", fullname, userid, err)
 		}
 
 	default:

@@ -9,21 +9,25 @@ Hatcher is a slack bot written in go. It can:
 
 ## Slack App Creation:
 
-- Go on the following url to create a new app: https://api.slack.com/apps
-- Retrieve the given token https://api.slack.com/apps/{app_id}/install-on-team?
+- Go to the following url to create a new app: https://api.slack.com/apps
+- Retrieve the token https://api.slack.com/apps/{app_id}/install-on-team?
 
     ```Bot User OAuth Access Token: xoxb-xxxxxxxxx-xxxxxxxxxxxxx```
-- Create a environment variable name SLACK_TOKEN with the value the token we just created:
+
+- Create an environment variable name SLACK_TOKEN with the value of the token you just created:
 
     ``` export SLACK_TOKEN=xoxb-xxxxxxxxx-xxxxxxxxxxxxx```
+
 ## How to use it:
 
 - Start ngrok
 
     ``` ngork http 9191```
+
 - Copy and past the ngrok url into https://api.slack.com/apps/{app_id}/interactive-messages?
 
     ``` https://xxxxxx.ngrok.io/slack```
+
 - Start the stack with:
 
     ```docker-compose up```

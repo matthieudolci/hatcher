@@ -94,6 +94,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		w.Write([]byte("No worries, let me know if you want to later on!"))
 	case "RemoveYes":
 		s.removeBot(userid, fullname)
+		s.GetTimeAndUsersHappinessSurvey()
 		w.Write([]byte("Sorry to see you go. Your user was deleted."))
 	case "RemoveNo":
 		w.Write([]byte("Glad you decided to stay :smiley:"))
@@ -135,6 +136,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		time := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
 		s.insertTimeHappinessSurvey(userid, fullname, time)
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!", displayname)))
+		s.GetTimeAndUsersHappinessSurvey()
 	}
 
 	w.WriteHeader(http.StatusOK)

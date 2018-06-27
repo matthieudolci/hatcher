@@ -30,11 +30,14 @@ func main() {
 		s.Logger.Fatal(err)
 	}
 
+	if err := s.GetTimeAndUsersHappinessSurvey(); err != nil {
+		s.Logger.Println("The scheduler for the Happinness Survey didn't start")
+	}
+
 	handler, err := s.APIHandler()
 	if err != nil {
 		s.Logger.Fatal(err)
 	}
 
 	lg.Fatal(http.ListenAndServe(":9191", handler))
-
 }
