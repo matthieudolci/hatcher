@@ -1,5 +1,7 @@
+TAG ?= latest
+
 build-docker:
-	docker build -t matthieudolci/hatcher .
+	docker build -t matthieudolci/hatcher:$(TAG) .
 .PHONY: build-docker
 
 build:
@@ -7,5 +9,5 @@ build:
 .PHONY: build
 
 push:
-	docker push matthieudolci/hatcher:latest
+	docker push matthieudolci/hatcher:$(TAG)
 .PHONY: push

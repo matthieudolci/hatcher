@@ -6,16 +6,23 @@ services:
 stages:
   - name: build go
     if: branch != master
-  - name: build docker image
+  - name: build docker latest
     if: (NOT type IN (pull_request)) AND (branch = master)
+  - name: build docker tag
+    if: (tag IS present) AND (branch != master)
 
 jobs:
   include:
     - stage: build go
       script: make build
-    - stage: build docker image
+    - stage: build docker latest
       script: 
         - make build-docker
         - docker login -u $DOCKER_USER -p $DOCKER_PASS
         - make push
+    - stage: build docker tag
+      script: 
+        - TAG=$TRAVIS_TAG make build-docker
+        - docker login -u $DOCKER_USER -p $DOCKER_PASS
+        - TAG=$TRAVIS_TAG make push
 
