@@ -409,7 +409,8 @@ func (s *Slack) insertTimeHappinessSurvey(userid, fullname, time string) {
 		sqlUpdate := `
 		UPDATE hatcher.users
 		SET happiness_schedule = $2
-		WHERE user_id = $1;`
+		WHERE user_id = $1
+		RETURNING id;`
 		err = database.DB.QueryRow(sqlUpdate, userid, time).Scan(&id)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Couldn't update the time of the happiness survey for user %s with ID %s.\n %s", fullname, userid, err)
