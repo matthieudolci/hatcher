@@ -372,6 +372,18 @@ func (s *Slack) askTimeHappinessSurvey(channelid, userid string) error {
 						Text:  "11:45",
 						Value: "11:45",
 					},
+					{
+						Text:  "12:00",
+						Value: "12:00",
+					},
+					{
+						Text:  "12:15",
+						Value: "12:15",
+					},
+					{
+						Text:  "12:30",
+						Value: "12:30",
+					},
 				},
 			},
 		},

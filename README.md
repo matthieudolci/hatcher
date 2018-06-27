@@ -18,7 +18,7 @@ Hatcher is a slack bot written in go. It can:
 
     ``` export SLACK_TOKEN=xoxb-xxxxxxxxx-xxxxxxxxxxxxx```
 
-## How to use it:
+## How to start it:
 
 - Start ngrok
 
@@ -31,6 +31,19 @@ Hatcher is a slack bot written in go. It can:
 - Start the stack with:
 
     ```docker-compose up```
+
+## How to use it:
+
+Your users will have to interact a first time with Hatcher by sending a DM to it with the following words:
+-   hello
+-   hi
+-   setup
+
+It will trigger few questions that need to be answered before the user can use the bot.
+
+To know how to use the happiness survey go [here](/docs/happiness-survey.md)
+
+To know how to use the happiness survey api go [here](/docs/api-happiness-survey.md) 
 
 ## Resources:
 https://blog.gopheracademy.com/advent-2017/go-slackbot/

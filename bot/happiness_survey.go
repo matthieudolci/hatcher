@@ -112,6 +112,7 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 	}
 	channel := make(chan int)
 	go startCron(channel)
+	gocron.Clear()
 	// get any error encountered during iteration
 	err = rows.Err()
 	if err != nil {
