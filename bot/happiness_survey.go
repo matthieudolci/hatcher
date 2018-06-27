@@ -111,7 +111,6 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 		s.runHappinessSurveySchedule(scheduledata.Times, scheduledata.UserID)
 	}
 	channel := make(chan int)
-	gocron.Clear()
 	go startCron(channel)
 	// get any error encountered during iteration
 	err = rows.Err()
@@ -130,6 +129,7 @@ func (s *Slack) runHappinessSurveySchedule(times, userid string) {
 	} else {
 		gocron.ChangeLoc(location)
 	}
+	gocron.Clear()
 	gocron.Every(1).Day().At(times).Do(s.askHappinessSurveyScheduled, userid)
 }
 
