@@ -92,7 +92,7 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 		UserID string
 	}
 
-	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH:MI'), user_id FROM hatcher.users;")
+	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH24:MI'), user_id FROM hatcher.users;")
 	if err != nil {
 		if err == sql.ErrNoRows {
 			s.Logger.Printf("[ERROR] There is no result time or user_id.\n")
@@ -108,11 +108,11 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 			s.Logger.Printf("[ERROR] During the scan.\n")
 		}
 		fmt.Println(scheduledata)
-		gocron.Clear()
 		s.runHappinessSurveySchedule(scheduledata.Times, scheduledata.UserID)
 	}
 	channel := make(chan int)
 	go startCron(channel)
+	gocron.Clear()
 	// get any error encountered during iteration
 	err = rows.Err()
 	if err != nil {
