@@ -101,6 +101,7 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 		}
 	}
 	defer rows.Close()
+	gocron.Clear()
 	for rows.Next() {
 		scheduledata := ScheduleData{}
 		err = rows.Scan(&scheduledata.Times, &scheduledata.UserID)
@@ -112,7 +113,6 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 	}
 	channel := make(chan int)
 	go startCron(channel)
-	gocron.Clear()
 	// get any error encountered during iteration
 	err = rows.Err()
 	if err != nil {
@@ -131,11 +131,6 @@ func (s *Slack) runHappinessSurveySchedule(times, userid string) {
 		gocron.ChangeLoc(location)
 	}
 	gocron.Every(1).Day().At(times).Do(s.askHappinessSurveyScheduled, userid)
-}
-
-// Starts gocron
-func startCron(channel chan int) {
-	<-gocron.Start()
 }
 
 // Ask how are the users doing
@@ -183,4 +178,9 @@ func (s *Slack) askHappinessSurveyScheduled(userid string) error {
 	}
 	fmt.Printf("Scheduled happyness survey for user %s posted", userid)
 	return nil
+}
+
+// Starts gocron
+func startCron(channel chan int) {
+	<-gocron.Start()
 }
