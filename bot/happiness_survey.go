@@ -108,6 +108,7 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 			s.Logger.Printf("[ERROR] During the scan.\n")
 		}
 		fmt.Println(scheduledata)
+		gocron.Clear()
 		s.runHappinessSurveySchedule(scheduledata.Times, scheduledata.UserID)
 	}
 	channel := make(chan int)
@@ -129,7 +130,6 @@ func (s *Slack) runHappinessSurveySchedule(times, userid string) {
 	} else {
 		gocron.ChangeLoc(location)
 	}
-	gocron.Clear()
 	gocron.Every(1).Day().At(times).Do(s.askHappinessSurveyScheduled, userid)
 }
 
