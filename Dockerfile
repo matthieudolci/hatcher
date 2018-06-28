@@ -6,5 +6,6 @@ RUN cd /go/src/github.com/matthieudolci/hatcher && \
 
 FROM alpine:3.7
 RUN apk add --no-cache ca-certificates tzdata
+ENV TZ America/Los_Angeles
 COPY --from=build /go/src/github.com/matthieudolci/hatcher/hatcher /bin
 CMD ["/bin/hatcher"]
