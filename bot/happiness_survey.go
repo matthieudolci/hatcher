@@ -101,7 +101,6 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 		}
 	}
 	defer rows.Close()
-	gocron.Clear()
 	for rows.Next() {
 		scheduledata := ScheduleData{}
 		err = rows.Scan(&scheduledata.Times, &scheduledata.UserID)
