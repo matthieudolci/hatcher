@@ -50,7 +50,7 @@ func surveyResultsUserDay(res *results, userid, date string) error {
 	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
-			happiness.result,
+			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
@@ -111,7 +111,7 @@ func surveyResultsUserAll(res *results, userid string) error {
 	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
-			happiness.result,
+			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
@@ -174,7 +174,7 @@ func surveyResultsUserBetweenDates(res *results, userid, date1, date2 string) er
 	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
-			happiness.result,
+			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
@@ -234,7 +234,7 @@ func surveyResultsAll(res *results) error {
 	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
-			happiness.result,
+			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
@@ -295,7 +295,7 @@ func surveyResultsAllUserBetweenDates(res *results, date1, date2 string) error {
 	rows, err := database.DB.Query(`
 		SELECT
 			users.user_id,
-			happiness.result,
+			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
