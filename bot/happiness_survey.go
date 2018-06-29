@@ -85,6 +85,9 @@ func (s *Slack) resultHappinessSurvey(userid, result string) {
 	s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
 }
 
+var scheduler *gocron.Scheduler
+var stop chan bool
+
 // GetTimeAndUsersHappinessSurvey gets the time selected by a user for the Happiness survey
 func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 	type ScheduleData struct {
@@ -101,7 +104,11 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 		}
 	}
 	defer rows.Close()
-	gocron.Clear()
+	if scheduler != nil {
+		stop <- true
+		scheduler.Clear()
+	}
+	scheduler = gocron.NewScheduler()
 	for rows.Next() {
 		scheduledata := ScheduleData{}
 		err = rows.Scan(&scheduledata.Times, &scheduledata.UserID)
@@ -111,8 +118,7 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 		fmt.Println(scheduledata)
 		s.runHappinessSurveySchedule(scheduledata.Times, scheduledata.UserID)
 	}
-	channel := make(chan int)
-	go startCron(channel)
+	stop = scheduler.Start()
 	// get any error encountered during iteration
 	err = rows.Err()
 	if err != nil {
@@ -130,7 +136,11 @@ func (s *Slack) runHappinessSurveySchedule(times, userid string) {
 	} else {
 		gocron.ChangeLoc(location)
 	}
-	gocron.Every(1).Day().At(times).Do(s.askHappinessSurveyScheduled, userid)
+	scheduler.Every(1).Monday().At(times).Do(s.askHappinessSurveyScheduled, userid)
+	scheduler.Every(1).Tuesday().At(times).Do(s.askHappinessSurveyScheduled, userid)
+	scheduler.Every(1).Wednesday().At(times).Do(s.askHappinessSurveyScheduled, userid)
+	scheduler.Every(1).Thursday().At(times).Do(s.askHappinessSurveyScheduled, userid)
+	scheduler.Every(1).Friday().At(times).Do(s.askHappinessSurveyScheduled, userid)
 }
 
 // Ask how are the users doing
@@ -178,9 +188,4 @@ func (s *Slack) askHappinessSurveyScheduled(userid string) error {
 	}
 	fmt.Printf("Scheduled happyness survey for user %s posted", userid)
 	return nil
-}
-
-// Starts gocron
-func startCron(channel chan int) {
-	<-gocron.Start()
 }
