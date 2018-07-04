@@ -1,13 +1,8 @@
 package bot
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"strings"
-	"time"
-
-	"github.com/jasonlvhit/gocron"
 
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
@@ -87,62 +82,6 @@ func (s *Slack) resultHappinessSurvey(userid, result string) error {
 		s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
 	}
 	return nil
-}
-
-var scheduler *gocron.Scheduler
-var stop chan bool
-
-// GetTimeAndUsersHappinessSurvey gets the time selected by a user for the Happiness survey
-func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
-	type ScheduleData struct {
-		Times  string
-		UserID string
-	}
-
-	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH24:MI'), userid FROM hatcher.users;")
-	if err != nil {
-		if err == sql.ErrNoRows {
-			s.Logger.Printf("[ERROR] There is no result time or userid.\n")
-		}
-	}
-	defer rows.Close()
-	if scheduler != nil {
-		stop <- true
-		scheduler.Clear()
-	}
-	scheduler = gocron.NewScheduler()
-	for rows.Next() {
-		scheduledata := ScheduleData{}
-		err = rows.Scan(&scheduledata.Times, &scheduledata.UserID)
-		if err != nil {
-			s.Logger.Printf("[ERROR] During the scan.\n")
-		}
-		fmt.Println(scheduledata)
-		s.runHappinessSurveySchedule(scheduledata.Times, scheduledata.UserID)
-	}
-	stop = scheduler.Start()
-	// get any error encountered during iteration
-	err = rows.Err()
-	if err != nil {
-		s.Logger.Printf("[ERROR] During iteration.\n")
-	}
-	return nil
-}
-
-// Runs the job askHappinessSurveyScheduled at a time defined by the user
-func (s *Slack) runHappinessSurveySchedule(times, userid string) {
-	location, err := time.LoadLocation("America/Vancouver")
-	if err != nil {
-		log.Println("Unfortunately can't load a location")
-		log.Println(err)
-	} else {
-		gocron.ChangeLoc(location)
-	}
-	scheduler.Every(1).Monday().At(times).Do(s.askHappinessSurveyScheduled, userid)
-	scheduler.Every(1).Tuesday().At(times).Do(s.askHappinessSurveyScheduled, userid)
-	scheduler.Every(1).Wednesday().At(times).Do(s.askHappinessSurveyScheduled, userid)
-	scheduler.Every(1).Thursday().At(times).Do(s.askHappinessSurveyScheduled, userid)
-	scheduler.Every(1).Friday().At(times).Do(s.askHappinessSurveyScheduled, userid)
 }
 
 // Ask how are the users doing

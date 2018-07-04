@@ -148,7 +148,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			s.Logger.Printf("[DEBUG] Started removeBot.\n")
 		}
 
-		err := s.GetTimeAndUsersHappinessSurvey()
+		err := s.GetTimeAndUsersForScheduler()
 		if err != nil {
 			s.Logger.Printf("[ERROR] Could not start GetTimeAndUsersHappinessSurvey for value RemoveYes: %s.\n", err)
 		} else {
@@ -236,13 +236,6 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		} else {
 			s.Logger.Printf("[DEBUG] Start insertTimeHappinessSurvey for name HappinessTime.\n")
 		}
-
-		err = s.GetTimeAndUsersHappinessSurvey()
-		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start GetTimeAndUsersHappinessSurvey for name HappinessTime: %s\n", err)
-		} else {
-			s.Logger.Printf("[DEBUG] Started GetTimeAndUsersHappinessSurvey for name HappinessTime.\n")
-		}
 		err = s.askTimeStandup(channelid, userid)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Could not start askTimeStandup for name HappinessTime: %s\n", err)
@@ -279,11 +272,11 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			s.Logger.Printf("[DEBUG] Start insertChannelStandup for name ChannelStandupChosen.\n")
 		}
 
-		err = s.GetTimeAndUsersStandup()
+		err = s.GetTimeAndUsersForScheduler()
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start GetTimeAndUsersStandup for name ChannelStandupChosen: %s\n", err)
+			s.Logger.Printf("[ERROR] Could not start GetTimeAndUsersForScheduler for name ChannelStandupChosen: %s\n", err)
 		} else {
-			s.Logger.Printf("[DEBUG] Start GetTimeAndUsersStandup for name ChannelStandupChosen.\n")
+			s.Logger.Printf("[DEBUG] Start GetTimeAndUsersForScheduler for name ChannelStandupChosen.\n")
 		}
 
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!", displayname)))
