@@ -31,7 +31,11 @@ func main() {
 	}
 
 	if err := s.GetTimeAndUsersHappinessSurvey(); err != nil {
-		s.Logger.Println("The scheduler for the Happinness Survey didn't start")
+		s.Logger.Println("The scheduler for the Happinness Survey didn't start: %s\n", err)
+	}
+
+	if err := s.GetTimeAndUsersStandup(); err != nil {
+		s.Logger.Printf("The scheduler for standup didn't start: %s\n", err)
 	}
 
 	handler, err := s.APIHandler()

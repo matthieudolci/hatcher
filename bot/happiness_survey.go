@@ -64,25 +64,29 @@ func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 			slack.MsgOptionPostMessageParameters(params),
 		)
 		if err != nil {
-			return err
+			s.Logger.Printf("[ERROR] Could not post askHappinessSurvey question: %s\n", err)
+		} else {
+			s.Logger.Printf("[DEBUG] askHappinessSurvey question posted.\n")
 		}
 	}
 	return nil
 }
 
 // Insert into the database the result of the happiness survey
-func (s *Slack) resultHappinessSurvey(userid, result string) {
+func (s *Slack) resultHappinessSurvey(userid, result string) error {
 
 	sqlWrite := `
-	INSERT INTO hatcher.happiness (user_id, results)
+	INSERT INTO hatcher.happiness (userid, results)
 	VALUES ($1, $2)
 	RETURNING id`
 
 	err := database.DB.QueryRow(sqlWrite, userid, result).Scan(&userid)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Couldn't insert in the database the result of the happiness survey for user ID %s.\n %s", userid, err)
+	} else {
+		s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
 	}
-	s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
+	return nil
 }
 
 var scheduler *gocron.Scheduler
@@ -95,12 +99,10 @@ func (s *Slack) GetTimeAndUsersHappinessSurvey() error {
 		UserID string
 	}
 
-	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH24:MI'), user_id FROM hatcher.users;")
+	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH24:MI'), userid FROM hatcher.users;")
 	if err != nil {
 		if err == sql.ErrNoRows {
-			s.Logger.Printf("[ERROR] There is no result time or user_id.\n")
-		} else {
-			panic(err)
+			s.Logger.Printf("[ERROR] There is no result time or userid.\n")
 		}
 	}
 	defer rows.Close()
@@ -184,8 +186,9 @@ func (s *Slack) askHappinessSurveyScheduled(userid string) error {
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
-		return err
+		s.Logger.Printf("[ERROR] Could not post askHappinessSurveyScheduled message: %s\n", err)
+	} else {
+		s.Logger.Printf("[DEBUG] Message for askHappinessSurveyScheduled posted.\n")
 	}
-	fmt.Printf("Scheduled happyness survey for user %s posted", userid)
 	return nil
 }

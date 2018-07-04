@@ -1,4 +1,4 @@
-FROM golang:1.10.1 AS build
+FROM golang:1.10.1-alpine AS build
 ENV CGO_ENABLED=0 GOOS=linux
 ADD . /go/src/github.com/matthieudolci/hatcher
 RUN cd /go/src/github.com/matthieudolci/hatcher && \

@@ -49,15 +49,15 @@ func surveyResultsUserDay(res *results, userid, date string) error {
 
 	rows, err := database.DB.Query(`
 		SELECT
-			users.user_id,
+			users.userid,
 			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
 			users.displayname
 		FROM hatcher.happiness, hatcher.users
-		WHERE happiness.user_id = users.user_id
-		AND happiness.user_id=$1 and happiness.date=$2;
+		WHERE happiness.userid = users.userid
+		AND happiness.userid=$1 and happiness.date=$2;
 		`, userid, date)
 	if err != nil {
 		return err
@@ -110,15 +110,15 @@ func surveyResultsUserAll(res *results, userid string) error {
 
 	rows, err := database.DB.Query(`
 		SELECT
-			users.user_id,
+			users.userid,
 			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
 			users.displayname
 		FROM hatcher.happiness, hatcher.users
-		WHERE happiness.user_id = users.user_id
-		AND happiness.user_id=$1;
+		WHERE happiness.userid = users.userid
+		AND happiness.userid=$1;
 		`, userid)
 	if err != nil {
 		return err
@@ -173,15 +173,15 @@ func surveyResultsUserBetweenDates(res *results, userid, date1, date2 string) er
 
 	rows, err := database.DB.Query(`
 		SELECT
-			users.user_id,
+			users.userid,
 			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
 			users.displayname
 		FROM hatcher.happiness, hatcher.users
-		WHERE happiness.user_id = users.user_id
-		AND happiness.user_id=$1
+		WHERE happiness.userid = users.userid
+		AND happiness.userid=$1
 		AND happiness.date BETWEEN $2 AND $3;
 		`, userid, date1, date2)
 	if err != nil {
@@ -233,14 +233,14 @@ func surveyResultsAll(res *results) error {
 
 	rows, err := database.DB.Query(`
 		SELECT
-			users.user_id,
+			users.userid,
 			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
 			users.displayname
 		FROM hatcher.happiness, hatcher.users
-		WHERE happiness.user_id = users.user_id;
+		WHERE happiness.userid = users.userid;
 		`)
 	if err != nil {
 		return err
@@ -294,14 +294,14 @@ func surveyResultsAllUserBetweenDates(res *results, date1, date2 string) error {
 
 	rows, err := database.DB.Query(`
 		SELECT
-			users.user_id,
+			users.userid,
 			happiness.results,
 			to_char(date, 'YYYY-MM-DD'),
 			users.full_name,
 			users.email,
 			users.displayname
 		FROM hatcher.happiness, hatcher.users
-		WHERE happiness.user_id = users.user_id
+		WHERE happiness.userid = users.userid
 		AND happiness.date BETWEEN $1 AND $2;
 		`, date1, date2)
 	if err != nil {

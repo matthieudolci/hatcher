@@ -47,11 +47,11 @@ func getAllUsers(u *users) error {
 
 	rows, err := database.DB.Query(`
 		SELECT
-			user_id,
+			userid,
 			full_name,
 			email,
-			manager_id,
-			is_manager,
+			managerid,
+			ismanager,
 			displayname
 		FROM hatcher.users;
 		`)
@@ -106,14 +106,14 @@ func getUser(u *users, userid string) error {
 
 	rows, err := database.DB.Query(`
 		SELECT
-			user_id,
+			userid,
 			full_name,
 			email,
-			manager_id,
-			is_manager,
+			managerid,
+			ismanager,
 			displayname
 		FROM hatcher.users
-		WHERE user_id=$1;
+		WHERE userid=$1;
 		`, userid)
 	if err != nil {
 		return err

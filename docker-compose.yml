@@ -17,6 +17,7 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
+    # image: matthieudolci/hatcher:latest
     container_name: hatcher
     depends_on:
       - postgres
