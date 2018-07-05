@@ -37,8 +37,8 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 		}
 		s.Logger.Printf("[DEBUG] Timestamp of the standupYesterday message: %s\n", timestamp)
 
-		timer := time.NewTimer(2 * time.Minute)
-		ticker := time.NewTicker(time.Second)
+		timer := time.NewTimer(10 * time.Minute)
+		ticker := time.NewTicker(5 * time.Second)
 
 	loop:
 		for {
@@ -127,8 +127,8 @@ func (s *Slack) standupYesterdayScheduled(userid string) error {
 	}
 	s.Logger.Printf("[DEBUG] Timestamp of the standupYesterday message: %s\n", timestamp)
 
-	timer := time.NewTimer(2 * time.Minute)
-	ticker := time.NewTicker(time.Second)
+	timer := time.NewTimer(10 * time.Minute)
+	ticker := time.NewTicker(5 * time.Second)
 
 loop:
 	for {
@@ -244,8 +244,8 @@ func (s *Slack) standupToday(channelid, userid string) error {
 		s.Logger.Printf("[DEBUG] Posting today standup question.\n")
 	}
 
-	timer := time.NewTimer(2 * time.Minute)
-	ticker := time.NewTicker(time.Second)
+	timer := time.NewTimer(10 * time.Minute)
+	ticker := time.NewTicker(5 * time.Second)
 
 loop:
 	for {
@@ -361,8 +361,8 @@ func (s *Slack) standupBlocker(channelid, userid string) error {
 		s.Logger.Printf("[DEBUG] Posted blocker standup question.\n")
 	}
 
-	timer := time.NewTimer(2 * time.Minute)
-	ticker := time.NewTicker(time.Second)
+	timer := time.NewTimer(10 * time.Minute)
+	ticker := time.NewTicker(5 * time.Second)
 
 loop:
 	for {
