@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
@@ -70,12 +71,17 @@ func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 // Insert into the database the result of the happiness survey
 func (s *Slack) resultHappinessSurvey(userid, result string) error {
 
+	t := time.Now().Local().Format("2006-01-02")
+	t2 := time.Now().Local().Format("15:04:05")
+	date := fmt.Sprintf(t)
+	time := fmt.Sprintf(t2)
+
 	sqlWrite := `
-	INSERT INTO hatcher.happiness (userid, results)
-	VALUES ($1, $2)
+	INSERT INTO hatcher.happiness (userid, results, date, time)
+	VALUES ($1, $2, $3, $4)
 	RETURNING id`
 
-	err := database.DB.QueryRow(sqlWrite, userid, result).Scan(&userid)
+	err := database.DB.QueryRow(sqlWrite, userid, result, date, time).Scan(&userid)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Couldn't insert in the database the result of the happiness survey for user ID %s.\n %s", userid, err)
 	} else {

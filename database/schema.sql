@@ -19,7 +19,8 @@ SET default_with_oids = false;
 CREATE TABLE hatcher.happiness (
     userid text,
     id integer NOT NULL,
-    date date DEFAULT CURRENT_DATE NOT NULL,
+    date text,
+    time text,
     results integer DEFAULT 0
 );
 
