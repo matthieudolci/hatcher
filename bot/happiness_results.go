@@ -51,7 +51,7 @@ func surveyResultsUserDay(res *results, userid, date string) error {
 		SELECT
 			users.userid,
 			happiness.results,
-			to_char(date, 'YYYY-MM-DD'),
+			happiness.date,
 			users.full_name,
 			users.email,
 			users.displayname
@@ -112,7 +112,7 @@ func surveyResultsUserAll(res *results, userid string) error {
 		SELECT
 			users.userid,
 			happiness.results,
-			to_char(date, 'YYYY-MM-DD'),
+			happiness.date,
 			users.full_name,
 			users.email,
 			users.displayname
@@ -175,7 +175,7 @@ func surveyResultsUserBetweenDates(res *results, userid, date1, date2 string) er
 		SELECT
 			users.userid,
 			happiness.results,
-			to_char(date, 'YYYY-MM-DD'),
+			happiness.date,
 			users.full_name,
 			users.email,
 			users.displayname
@@ -235,7 +235,7 @@ func surveyResultsAll(res *results) error {
 		SELECT
 			users.userid,
 			happiness.results,
-			to_char(date, 'YYYY-MM-DD'),
+			happiness.date,
 			users.full_name,
 			users.email,
 			users.displayname
@@ -296,7 +296,7 @@ func surveyResultsAllUserBetweenDates(res *results, date1, date2 string) error {
 		SELECT
 			users.userid,
 			happiness.results,
-			to_char(date, 'YYYY-MM-DD'),
+			happiness.date,
 			users.full_name,
 			users.email,
 			users.displayname

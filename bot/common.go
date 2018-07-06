@@ -67,12 +67,14 @@ func (s *Slack) runScheduler(timeStandup, timeHappiness, userid string) error {
 	scheduler.Every(1).Wednesday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
 	scheduler.Every(1).Thursday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
 	scheduler.Every(1).Friday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
+	s.Logger.Printf("[INFO] Standup schedule tasks for user %s posted.\n", userid)
 
 	scheduler.Every(1).Monday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
 	scheduler.Every(1).Tuesday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
 	scheduler.Every(1).Wednesday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
 	scheduler.Every(1).Thursday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
 	scheduler.Every(1).Friday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
+	s.Logger.Printf("[INFO] Happiness Survey schedule tasks for user %s posted.\n", userid)
 
 	return nil
 }

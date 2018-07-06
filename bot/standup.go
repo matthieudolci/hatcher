@@ -35,7 +35,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 		if err != nil {
 			s.Logger.Printf("failed to post yesterday standup question: %s\n", err)
 		}
-		s.Logger.Printf("[DEBUG] Timestamp of the standupYesterday message: %s\n", timestamp)
+		s.Logger.Printf("[INFO] Timestamp of the standupYesterday message: %s\n", timestamp)
 
 		timer := time.NewTimer(10 * time.Minute)
 		ticker := time.NewTicker(5 * time.Second)
@@ -61,6 +61,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 				if err != nil {
 					s.Logger.Printf("[ERROR] Could not get the IM history of message with timestamp %s: %s\n", timestamp, err)
 				}
+				s.Logger.Printf("[INFO] Getting IM history of message with timestamp %s\n", timestamp)
 
 				message := history.Messages
 
@@ -80,23 +81,23 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 						s.standupCancel(ev.Channel)
 						if err != nil {
 							s.Logger.Printf("[ERROR] Could not cancel standup: %+v\n", err)
-						} else {
-							s.Logger.Printf("[DEBUG] Standup Canceled.\n")
 						}
+						s.Logger.Printf("[INFO] Standup Canceled.\n")
+
 						break loop
 					default:
 						s.standupYesterdayRegister(text, stamp, date, time, userid)
 						if err != nil {
 							s.Logger.Printf("[ERROR] Could not start standupYesterdayRegister: %+v\n", err)
-						} else {
-							s.Logger.Printf("[DEBUG] Starting standupYesterdayRegister\n")
 						}
+						s.Logger.Printf("[INFO] Starting standupYesterdayRegister\n")
+
 						err = s.standupToday(ev.Channel, ev.User)
 						if err != nil {
 							s.Logger.Printf("[ERROR] Could not start standupToday: %s\n", err)
-						} else {
-							s.Logger.Printf("[DEBUG] Starting standupToday.\n")
 						}
+						s.Logger.Printf("[INFO] Starting standupToday.\n")
+
 						break loop
 					}
 				}
@@ -125,7 +126,7 @@ func (s *Slack) standupYesterdayScheduled(userid string) error {
 	if err != nil {
 		s.Logger.Printf("failed to post yesterday standup question: %s\n", err)
 	}
-	s.Logger.Printf("[DEBUG] Timestamp of the standupYesterday message: %s\n", timestamp)
+	s.Logger.Printf("[INFO] Timestamp of the standupYesterday message: %s\n", timestamp)
 
 	timer := time.NewTimer(10 * time.Minute)
 	ticker := time.NewTicker(5 * time.Second)
@@ -137,9 +138,9 @@ loop:
 			s.standupCancelTimeout(channelid)
 			if err != nil {
 				s.Logger.Printf("[ERROR] Could not cancel standup: %+v\n", err)
-			} else {
-				s.Logger.Printf("[DEBUG] Standup Canceled.\n")
 			}
+			s.Logger.Printf("[INFO] Standup Canceled.\n")
+
 			break loop
 		case <-ticker.C:
 			params2 := slack.HistoryParameters{
@@ -151,6 +152,7 @@ loop:
 			if err != nil {
 				s.Logger.Printf("[ERROR] Could not get the IM history of message with timestamp %s: %s\n", timestamp, err)
 			}
+			s.Logger.Printf("[INFO] Getting IM history of message with timestamp %s\n", timestamp)
 
 			message := history.Messages
 
@@ -170,23 +172,22 @@ loop:
 					s.standupCancel(channelid)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not cancel standup: %+v\n", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Standup Canceled.\n")
 					}
+					s.Logger.Printf("[INFO] Standup Canceled.\n")
+
 					break loop
 				default:
 					s.standupYesterdayRegister(text, stamp, date, time, userid)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not start standupYesterdayRegister: %+v\n", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Starting standupYesterdayRegister\n")
 					}
+					s.Logger.Printf("[INFO] Starting standupYesterdayRegister\n")
+
 					err = s.standupToday(channelid, userid)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not start standupToday: %s\n", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Starting standupToday.\n")
 					}
+					s.Logger.Printf("[INFO] Starting standupToday.\n")
 					break loop
 				}
 			}
@@ -197,7 +198,7 @@ loop:
 
 func (s *Slack) standupYesterdayRegister(response, timestamp, date, time, userid string) error {
 
-	s.Logger.Printf("[DEBUG] Starting import in database of standupYesterday result\n")
+	s.Logger.Printf("[INFO] Starting import in database of standupYesterday result\n")
 
 	var id string
 
@@ -218,9 +219,8 @@ func (s *Slack) standupYesterdayRegister(response, timestamp, date, time, userid
 		userid).Scan(&id)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Couldn't insert in the database the result of standupYesterday: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] standupYesterday result written in database.\n")
 	}
+	s.Logger.Printf("[INFO] standupYesterday result written in database.\n")
 	return nil
 }
 
@@ -240,9 +240,8 @@ func (s *Slack) standupToday(channelid, userid string) error {
 	_, timestamp, err := s.Client.PostMessage(channelid, "", params)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Failed to post today standup question: %s", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Posting today standup question.\n")
 	}
+	s.Logger.Printf("[INFO] Posting today standup question.\n")
 
 	timer := time.NewTimer(10 * time.Minute)
 	ticker := time.NewTicker(5 * time.Second)
@@ -254,9 +253,8 @@ loop:
 			s.standupCancelTimeout(channelid)
 			if err != nil {
 				s.Logger.Printf("[ERROR] Could not cancel standup: %+v\n", err)
-			} else {
-				s.Logger.Printf("[DEBUG] Standup Canceled.\n")
 			}
+			s.Logger.Printf("[INFO] Standup Canceled.\n")
 			break loop
 		case <-ticker.C:
 			params2 := slack.HistoryParameters{
@@ -268,6 +266,7 @@ loop:
 			if err != nil {
 				s.Logger.Printf("[ERROR] Could not get the IM history of message with timestamp %s: %s\n", timestamp, err)
 			}
+			s.Logger.Printf("[INFO] Getting IM history of message with timestamp %s\n", timestamp)
 
 			message := history.Messages
 
@@ -287,23 +286,23 @@ loop:
 					s.standupCancel(channelid)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not cancel standup: %+v\n", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Canceled standup\n")
 					}
+					s.Logger.Printf("[INFO] Canceled standup\n")
+
 					break loop
 				default:
 					err := s.standupTodayRegister(text, stamp, date, time, userid)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not start standupTodayRegister: %+v\n", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Starting standupTodayRegister\n")
 					}
+					s.Logger.Printf("[INFO] Starting standupTodayRegister\n")
+
 					err = s.standupBlocker(channelid, userid)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not start standupBlocker: %s\n.", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Started standupBlocker.\n")
 					}
+					s.Logger.Printf("[INFO] Started standupBlocker.\n")
+
 					break loop
 				}
 			}
@@ -314,7 +313,7 @@ loop:
 
 func (s *Slack) standupTodayRegister(response, timestamp, date, time, userid string) error {
 
-	s.Logger.Printf("[DEBUG] Starting import in database of standupToday result\n")
+	s.Logger.Printf("[INFO] Starting import in database of standupToday result\n")
 
 	var id string
 
@@ -335,9 +334,9 @@ func (s *Slack) standupTodayRegister(response, timestamp, date, time, userid str
 		userid).Scan(&id)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Couldn't insert in the database the result of standupToday: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] standupToday result written in database.\n")
 	}
+	s.Logger.Printf("[INFO] standupToday result written in database.\n")
+
 	return nil
 }
 
@@ -357,9 +356,8 @@ func (s *Slack) standupBlocker(channelid, userid string) error {
 	_, timestamp, err := s.Client.PostMessage(channelid, "", params)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Failed to post blocker standup question: %s", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Posted blocker standup question.\n")
 	}
+	s.Logger.Printf("[INFO] Posted blocker standup question.\n")
 
 	timer := time.NewTimer(10 * time.Minute)
 	ticker := time.NewTicker(5 * time.Second)
@@ -371,9 +369,9 @@ loop:
 			s.standupCancelTimeout(channelid)
 			if err != nil {
 				s.Logger.Printf("[ERROR] Could not cancel standup: %+v\n", err)
-			} else {
-				s.Logger.Printf("[DEBUG] Standup Canceled.\n")
 			}
+			s.Logger.Printf("[INFO] Standup Canceled.\n")
+
 			break loop
 		case <-ticker.C:
 			params2 := slack.HistoryParameters{
@@ -385,6 +383,7 @@ loop:
 			if err != nil {
 				s.Logger.Printf("[ERROR] Could not get the IM history of message with timestamp %s: %s\n", timestamp, err)
 			}
+			s.Logger.Printf("[INFO] Getting IM history of message with timestamp %s\n", timestamp)
 
 			message := history.Messages
 
@@ -404,24 +403,22 @@ loop:
 					err := s.standupCancel(channelid)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not cancel standup: %+v\n", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Standup canceled.\n")
 					}
+					s.Logger.Printf("[INFO] Standup canceled.\n")
+
 					break loop
 				default:
 					err := s.standupBlockerRegister(text, stamp, date, time, userid)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not start standupBlockerRegister: %+v\n", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Started standupBlockerRegister.\n")
 					}
+					s.Logger.Printf("[INFO] Started standupBlockerRegister.\n")
 
 					err = s.standupDone(channelid, userid, date)
 					if err != nil {
 						s.Logger.Printf("[ERROR] Could not start standupDone: %+v\n", err)
-					} else {
-						s.Logger.Printf("[DEBUG] Started standupDone.\n")
 					}
+					s.Logger.Printf("[INFO] Started standupDone.\n")
 
 					break loop
 				}
@@ -433,7 +430,7 @@ loop:
 
 func (s *Slack) standupBlockerRegister(response, timestamp, date, time, userid string) error {
 
-	s.Logger.Printf("[DEBUG] Starting import in database of standupBlocker result\n")
+	s.Logger.Printf("[INFO] Starting import in database of standupBlocker result\n")
 
 	var id string
 
@@ -454,9 +451,9 @@ func (s *Slack) standupBlockerRegister(response, timestamp, date, time, userid s
 		userid).Scan(&id)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Couldn't insert in the database the result of standupBlocker: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] standupBlocker result written in database.\n")
 	}
+	s.Logger.Printf("[INFO] standupBlocker result written in database.\n")
+
 	return nil
 }
 
@@ -475,10 +472,9 @@ func (s *Slack) standupCancel(channelid string) error {
 	}
 	_, _, err := s.Client.PostMessage(channelid, "", params)
 	if err != nil {
-		s.Logger.Printf("failed to post standup canceled message: %s\n", err)
-	} else {
-		s.Logger.Printf("Posted standup canceled message.\n")
+		s.Logger.Printf("[ERROR] failed to post standup canceled message: %s\n", err)
 	}
+	s.Logger.Printf("[INFO] Posted standup canceled message.\n")
 
 	return nil
 }
@@ -498,10 +494,9 @@ func (s *Slack) standupCancelTimeout(channelid string) error {
 	}
 	_, _, err := s.Client.PostMessage(channelid, "", params)
 	if err != nil {
-		s.Logger.Printf("failed to post standup canceled timeout message: %s\n", err)
-	} else {
-		s.Logger.Printf("Posted standup canceled timeout message.\n")
+		s.Logger.Printf("[ERROR] failed to post standup canceled timeout message: %s\n", err)
 	}
+	s.Logger.Printf("[INFO] Posted standup canceled timeout message.\n")
 
 	return nil
 }
@@ -522,16 +517,14 @@ func (s *Slack) standupDone(channelid, userid, date string) error {
 	_, _, err := s.Client.PostMessage(channelid, "", params)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Failed to post standup done message: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Posted standup done message.\n")
 	}
+	s.Logger.Printf("[INFO] Posted standup done message.\n")
 
 	err = s.postStandupResults(userid, date)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Could not start postStandup: %s", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Started postStandup")
 	}
+	s.Logger.Printf("[INFO] Started postStandup")
 
 	return nil
 }
@@ -591,9 +584,9 @@ func (s *Slack) postStandupResults(userid, date string) error {
 		_, _, err := s.Client.PostMessage(standupChannel, "", params)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Failed to post standup results: %s\n", err)
-		} else {
-			s.Logger.Printf("[DEBUG] Standup posted.\n")
 		}
+		s.Logger.Printf("[INFO] Standup posted.\n")
+
 	}
 	return nil
 }

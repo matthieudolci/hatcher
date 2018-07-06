@@ -61,9 +61,8 @@ func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 		)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Could not post askHappinessSurvey question: %s\n", err)
-		} else {
-			s.Logger.Printf("[DEBUG] askHappinessSurvey question posted.\n")
 		}
+		s.Logger.Printf("[INFO] askHappinessSurvey question posted.\n")
 	}
 	return nil
 }
@@ -84,9 +83,8 @@ func (s *Slack) resultHappinessSurvey(userid, result string) error {
 	err := database.DB.QueryRow(sqlWrite, userid, result, date, time).Scan(&userid)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Couldn't insert in the database the result of the happiness survey for user ID %s.\n %s", userid, err)
-	} else {
-		s.Logger.Printf("[DEBUG] Happiness Survey Result written in database.\n")
 	}
+	s.Logger.Printf("[INFO] Happiness Survey Result written in database.\n")
 	return nil
 }
 
@@ -132,8 +130,7 @@ func (s *Slack) askHappinessSurveyScheduled(userid string) error {
 	)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Could not post askHappinessSurveyScheduled message: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Message for askHappinessSurveyScheduled posted.\n")
 	}
+	s.Logger.Printf("[INFO] Message for askHappinessSurveyScheduled posted.\n")
 	return nil
 }

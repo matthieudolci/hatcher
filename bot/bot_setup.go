@@ -57,9 +57,8 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 		)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Could not post askSetup question: %s\n", err)
-		} else {
-			s.Logger.Printf("[DEBUG] Message for askSetup posted.\n")
 		}
+		s.Logger.Printf("[INFO] Message for askSetup posted.\n")
 	}
 	return nil
 }
@@ -84,7 +83,7 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) error {
 		if err != nil {
 			s.Logger.Printf("[ERROR] Could not create user %s.\n %s", fullname, err)
 		}
-		s.Logger.Printf("[DEBUG] User (%s) was created.\n", fullname)
+		s.Logger.Printf("[INFO] User (%s) was created.\n", fullname)
 	// If the user exist it will update it
 	case nil:
 		sqlUpdate := `
@@ -95,9 +94,8 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) error {
 		err = database.DB.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Couldn't update user %s with ID %s in the database: %s\n", fullname, userid, err)
-		} else {
-			s.Logger.Printf("[DEBUG] User (%s) was updated.\n", fullname)
 		}
+		s.Logger.Printf("[INFO] User (%s) was updated.\n", fullname)
 	default:
 	}
 	return nil
@@ -149,9 +147,9 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 		)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Could not post message for askRemove: %s\n", err)
-		} else {
-			s.Logger.Printf("[DEBUG] Message for askRemove posted.\n")
 		}
+		s.Logger.Printf("[INFO] Message for askRemove posted.\n")
+
 	}
 	return nil
 }
@@ -174,9 +172,8 @@ func (s *Slack) removeBot(userid, fullname string) error {
 		_, err = database.DB.Exec(sqlDelete, userid)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Couldn't not check if user %s with ID %s exist in the database: %s\n", fullname, userid, err)
-		} else {
-			s.Logger.Printf("[DEBUG] User %s with id %s was deleted.\n", fullname, userid)
 		}
+		s.Logger.Printf("[INFO] User %s with id %s was deleted.\n", fullname, userid)
 	default:
 	}
 	return nil
@@ -211,9 +208,8 @@ func (s *Slack) askWhoIsManager(channelid, userid string) error {
 	)
 	if err != nil {
 		s.Logger.Print("[ERROR] Could not post message askWhoIsManager: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Message for askWhoIsManager posted.\n")
 	}
+	s.Logger.Printf("[INFO] Message for askWhoIsManager posted.\n")
 	return nil
 }
 
@@ -239,9 +235,8 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) err
 		err = database.DB.QueryRow(sqlUpdate, userid, managerid).Scan(&userid)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Couldn't update the manager %s for the user %s with ID %s: %s\n", managername, fullname, userid, err)
-		} else {
-			s.Logger.Printf("[DEBUG] Manager %s was added to user %s.\n", managername, fullname)
 		}
+		s.Logger.Printf("[INFO] Manager %s was added to user %s.\n", managername, fullname)
 	default:
 	}
 	return nil
@@ -284,9 +279,8 @@ func (s *Slack) askIfManager(channelid, userid string) error {
 	)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Could not post message for askIfManager: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Message for askIfManager posted.\n")
 	}
+	s.Logger.Printf("[INFO] Message for askIfManager posted.\n")
 	return nil
 }
 
@@ -315,9 +309,8 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) error {
 		}
 		if ismanager == "true" {
 			s.Logger.Printf("[DEBUG] %s is now setup as a manager.\n", fullname)
-		} else {
-			s.Logger.Printf("[DEBUG] %s is not a manager.\n", fullname)
 		}
+		s.Logger.Printf("[INFO] %s is not a manager.\n", fullname)
 	default:
 	}
 	return nil
@@ -400,9 +393,8 @@ func (s *Slack) askTimeHappinessSurvey(channelid, userid string) error {
 	)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Could not post message askTimeHappinessSurvey: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Message askTimeHappinessSurvey posted.\n")
 	}
+	s.Logger.Printf("[INFO] Message askTimeHappinessSurvey posted.\n")
 	return nil
 }
 
@@ -428,9 +420,9 @@ func (s *Slack) insertTimeHappinessSurvey(userid, fullname, time string) error {
 		err = database.DB.QueryRow(sqlUpdate, userid, time).Scan(&id)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Couldn't update the time of the happiness survey for user %s with ID %s: %s\n", fullname, userid, err)
-		} else {
-			s.Logger.Printf("[DEBUG] Time of the happiness survey for user %s with ID %s updated.\n", fullname, userid)
 		}
+		s.Logger.Printf("[INFO] Time of the happiness survey for user %s with ID %s updated.\n", fullname, userid)
+
 	default:
 	}
 	return nil
@@ -497,9 +489,9 @@ func (s *Slack) askTimeStandup(channelid, userid string) error {
 	)
 	if err != nil {
 		s.Logger.Printf("[ERROR] Could not post message askTimeStandup: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Message askTimeStandup posted.\n")
 	}
+	s.Logger.Printf("[INFO] Message askTimeStandup posted.\n")
+
 	return nil
 }
 
@@ -525,9 +517,9 @@ func (s *Slack) insertTimeStandup(userid, fullname, time string) error {
 		err = database.DB.QueryRow(sqlUpdate, userid, time).Scan(&id)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Couldn't update the time for standup for user %s with ID %s: %s\n", fullname, userid, err)
-		} else {
-			s.Logger.Printf("[DEBUG] Time for standup for user %s with ID %s updated.\n", fullname, userid)
 		}
+		s.Logger.Printf("[INFO] Time for standup for user %s with ID %s updated.\n", fullname, userid)
+
 	default:
 	}
 	return nil
@@ -562,9 +554,9 @@ func (s *Slack) askWhichChannelStandup(channelid, userid string) error {
 	)
 	if err != nil {
 		s.Logger.Print("[ERROR] Could not post message askWhoIsManager: %s\n", err)
-	} else {
-		s.Logger.Printf("[DEBUG] Message for askWhoIsManager posted.\n")
 	}
+	s.Logger.Printf("[INFO] Message for askWhoIsManager posted.\n")
+
 	return nil
 }
 
@@ -589,9 +581,9 @@ func (s *Slack) insertChannelStandup(userid, fullname, channel string) error {
 		err = database.DB.QueryRow(sqlUpdate, userid, channel).Scan(&id)
 		if err != nil {
 			s.Logger.Printf("[ERROR] Couldn't update the channel for the standup results for user %s with ID %s: %s\n", fullname, userid, err)
-		} else {
-			s.Logger.Printf("[DEBUG] Channel of the standup results for user %s with ID %s updated.\n", fullname, userid)
 		}
+		s.Logger.Printf("[INFO] Channel of the standup results for user %s with ID %s updated.\n", fullname, userid)
+
 	default:
 	}
 	return nil
