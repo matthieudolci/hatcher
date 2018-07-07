@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/julienschmidt/httprouter"
 	"github.com/nlopes/slack"
 )
@@ -17,14 +18,16 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	if r.URL.Path != "/slack" {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(fmt.Sprintf("incorrect path: %s", r.URL.Path)))
-		s.Logger.Printf("[ERROR] incorrect path: %s\n", r.URL.Path)
+		log.WithFields(log.Fields{
+			"urlpath": r.URL.Path,
+		}).Error("incorrect path")
 		return
 	}
 
 	if r.Body == nil {
 		w.WriteHeader(http.StatusNotAcceptable)
 		w.Write([]byte("empty body"))
-		s.Logger.Printf("[ERROR] Empty body.\n")
+		log.Error("Empty body")
 		return
 	}
 	defer r.Body.Close()
@@ -33,7 +36,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	if err != nil {
 		w.WriteHeader(http.StatusGone)
 		w.Write([]byte("could not parse body"))
-		s.Logger.Printf("[ERROR] Could not parse body.\n")
+		log.Error("Could not parse body")
 		return
 	}
 
@@ -42,7 +45,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	if len(reply) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		w.Write([]byte("could not find payload"))
-		s.Logger.Printf("[ERROR] Could not find payload.\n")
+		log.Error("Could not find payload")
 		return
 	}
 
@@ -52,7 +55,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	if err != nil {
 		w.WriteHeader(http.StatusGone)
 		w.Write([]byte("could not process payload"))
-		s.Logger.Printf("[ERROR] Could not process payload.\n")
+		log.Error("Could not process payload")
 		return
 	}
 
@@ -63,7 +66,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 	user, err := api.GetUserInfo(userid)
 	if err != nil {
-		s.Logger.Printf("[ERROR] Could not get user info: %s.\n", err)
+		log.WithError(err).Error("Could not get user info")
 		return
 	}
 
@@ -81,9 +84,9 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 			err := s.resultHappinessSurvey(userid, value)
 			if err != nil {
-				s.Logger.Printf("[ERROR] Could not start resultHappinessSurvey for value happinessGood: %s.\n", err)
+				log.WithError(err).Error("Could not start resultHappinessSurvey for value happinessGood")
 			}
-			s.Logger.Printf("[INFO] Started resultHappinessSurvey for value happinessGood\n")
+			log.Info("Started resultHappinessSurvey for value happinessGood")
 
 			w.Write([]byte("Awesome, have a wonderful day!"))
 		}
@@ -96,9 +99,9 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 			err := s.resultHappinessSurvey(userid, value)
 			if err != nil {
-				s.Logger.Printf("[ERROR] Could not start resultHappinessSurvey for value happinessNeutral: %s.\n", err)
+				log.WithError(err).Error("Could not start resultHappinessSurvey for value happinessNeutral")
 			}
-			s.Logger.Printf("[INFO] Started resultHappinessSurvey for value happinessNeutral.\n")
+			log.Info("Started resultHappinessSurvey for value happinessNeutral")
 
 			w.Write([]byte("I hope your day will get better :slightly_smiling_face:"))
 		}
@@ -110,9 +113,9 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 			err := s.resultHappinessSurvey(userid, value)
 			if err != nil {
-				s.Logger.Printf("[ERROR] Could not start resultHappinessSurvey for value happinessSad: %s.\n", err)
+				log.WithError(err).Error("Could not start resultHappinessSurvey for value happinessSad")
 			}
-			s.Logger.Printf("[INFO] Started resultHappinessSurvey for value happinessSad.\n")
+			log.Info("Started resultHappinessSurvey for value happinessSad")
 
 			w.Write([]byte("I am sorry to hear that. Take all the time you need to feel better."))
 		}
@@ -122,15 +125,15 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 		err := s.initBot(userid, email, fullname, displayname)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start initBot for value SetupYes: %s.\n", err)
+			log.WithError(err).Error("Could not start initBot for value SetupYes")
 		}
-		s.Logger.Printf("[INFO] Started initBot for value SetupYes.\n")
+		log.Info("Started initBot for value SetupYes")
 
 		err = s.askWhoIsManager(channelid, userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start askWhoIsManager: %s.\n", err)
+			log.WithError(err).Error("Could not start askWhoIsManager")
 		}
-		s.Logger.Printf("[INFO] Start askWhoIsManager.\n")
+		log.Info("Start askWhoIsManager")
 
 	case "SetupNo":
 		w.Write([]byte("No worries, let me know if you want to later on!"))
@@ -138,15 +141,15 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	case "RemoveYes":
 		err = s.removeBot(userid, fullname)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start removeBot: %s\n", err)
+			log.WithError(err).Error("Could not start removeBot")
 		}
-		s.Logger.Printf("[INFO] Started removeBot.\n")
+		log.Info("Started removeBot")
 
 		err := s.GetTimeAndUsersForScheduler()
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start GetTimeAndUsersHappinessSurvey for value RemoveYes: %s.\n", err)
+			log.WithError(err).Error("Could not start GetTimeAndUsersHappinessSurvey for value RemoveYes")
 		}
-		s.Logger.Printf("[INFO] Started GetTimeAndUsersHappinessSurvey for value RemoveYes.\n")
+		log.Info("Started GetTimeAndUsersHappinessSurvey for value RemoveYes")
 
 		w.Write([]byte("Sorry to see you go. Your user was deleted."))
 
@@ -161,9 +164,9 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 			err := s.setupIsManager(userid, fullname, value)
 			if err != nil {
-				s.Logger.Printf("[ERROR] Could not start setupIsManager for value isManagerYes: %s.\n", err)
+				log.WithError(err).Error("Could not start setupIsManager for value isManagerYes")
 			}
-			s.Logger.Printf("[INFO] Start setupIsManager for value isManagerYes.\n")
+			log.Info("Start setupIsManager for value isManagerYes")
 
 			w.Write([]byte(fmt.Sprintf(":white_check_mark: - You are setup as a manager.")))
 		}
@@ -176,9 +179,9 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 			err := s.setupIsManager(userid, fullname, value)
 			if err != nil {
-				s.Logger.Printf("[ERROR] Could not start setupIsManager for value isManagerNo: %s.\n", err)
+				log.WithError(err).Error("Could not start setupIsManager for value isManagerNo")
 			}
-			s.Logger.Printf("[INFO] Start setupIsManager for value isManagerNo.\n")
+			log.Info("Start setupIsManager for value isManagerNo")
 
 			w.Write([]byte(fmt.Sprintf(":white_check_mark: - You are not setup as a manager.")))
 		}
@@ -190,46 +193,46 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 		manager, err := api.GetUserInfo(managerid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start GetUserInfo for name ManagerChosen: %s\n", err)
+			log.WithError(err).Error("Could not start GetUserInfo for name ManagerChosen")
 		}
-		s.Logger.Printf("[INFO] Getting user informations for name ManagerChosen\n")
+		log.Info("Getting user informations for name ManagerChosen")
 
 		managername := fmt.Sprintf(manager.RealName)
 
 		err = s.initManager(userid, fullname, managerid, managername)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start initManager for name ManagerChosen: %s\n", err)
+			log.WithError(err).Error("Could not start initManager for name ManagerChosen")
 		}
-		s.Logger.Printf("[INFO] Started initManager for name ManagerChosen.\n")
+		log.Info("Started initManager for name ManagerChosen")
 
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager.", managername)))
 
 		err = s.askIfManager(channelid, userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start askIfManager for name ManagerChosen: %s\n", err)
+			log.WithError(err).Error("Could not start askIfManager for name ManagerChosen")
 		}
-		s.Logger.Printf("[INFO] Started askIfManager for name ManagerChosen.\n")
+		log.Info("Started askIfManager for name ManagerChosen")
 
 	case "isManagerYes", "isManagerNo":
 		err := s.askTimeHappinessSurvey(channelid, userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start askTimeHappinessSurveyfor for name isManagerYes or isManagerNo: %s\n", err)
+			log.WithError(err).Error("Could not start askTimeHappinessSurveyfor for name isManagerYes or isManagerNo")
 		}
-		s.Logger.Printf("[INFO] Started askTimeHappinessSurveyfor for name isManagerYes or isManagerNo.\n")
+		log.Info("Started askTimeHappinessSurveyfor for name isManagerYes or isManagerNo")
 	case "HappinessTime":
 		time := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
 
 		err := s.insertTimeHappinessSurvey(userid, fullname, time)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start insertTimeHappinessSurvey for name HappinessTime: %s\n", err)
+			log.WithError(err).Error("Could not start insertTimeHappinessSurvey for name HappinessTime")
 		}
-		s.Logger.Printf("[INFO] Start insertTimeHappinessSurvey for name HappinessTime.\n")
+		log.Info("Start insertTimeHappinessSurvey for name HappinessTime")
 
 		err = s.askTimeStandup(channelid, userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start askTimeStandup for name HappinessTime: %s\n", err)
+			log.WithError(err).Error("Could not start askTimeStandup for name HappinessTime")
 		}
-		s.Logger.Printf("[INFO] Start insertTimaskTimeStandupeHappinessSurvey for name HappinessTime.\n")
+		log.Info("Start insertTimaskTimeStandupeHappinessSurvey for name HappinessTime")
 
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - Time for happiness survey selected")))
 
@@ -238,15 +241,15 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 		err := s.insertTimeStandup(userid, fullname, time)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start insertTimeStandup for name StandupTime: %s\n", err)
+			log.WithError(err).Error("Could not start insertTimeStandup for name StandupTime")
 		}
-		s.Logger.Printf("[INFO] Start insertTimeStandup for name StandupTime.\n")
+		log.Info("Start insertTimeStandup for name StandupTime")
 
 		err = s.askWhichChannelStandup(channelid, userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start askWhichChannelStandup for name StandupTime: %s\n", err)
+			log.WithError(err).Error("Could not start askWhichChannelStandup for name StandupTime")
 		}
-		s.Logger.Printf("[INFO] Start askWhichChannelStandup for name StandupTime.\n")
+		log.Info("Start askWhichChannelStandup for name StandupTime")
 
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - Time for standup selected")))
 
@@ -255,15 +258,15 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 		err := s.insertChannelStandup(userid, fullname, channel)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start insertChannelStandup for name ChannelStandupChosen: %s\n", err)
+			log.WithError(err).Error("Could not start insertChannelStandup for name ChannelStandupChosen")
 		}
-		s.Logger.Printf("[INFO] Start insertChannelStandup for name ChannelStandupChosen.\n")
+		log.Info("Start insertChannelStandup for name ChannelStandupChosen")
 
 		err = s.GetTimeAndUsersForScheduler()
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not start GetTimeAndUsersForScheduler for name ChannelStandupChosen: %s\n", err)
+			log.WithError(err).Error("Could not start GetTimeAndUsersForScheduler for name ChannelStandupChosen")
 		}
-		s.Logger.Printf("[INFO] Start GetTimeAndUsersForScheduler for name ChannelStandupChosen.\n")
+		log.Info("Start GetTimeAndUsersForScheduler for name ChannelStandupChosen")
 
 		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!", displayname)))
 	}

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
 )
@@ -60,9 +61,15 @@ func (s *Slack) askHappinessSurvey(ev *slack.MessageEvent) error {
 			slack.MsgOptionPostMessageParameters(params),
 		)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not post askHappinessSurvey question: %s\n", err)
+			log.WithFields(log.Fields{
+				"channelid": ev.Channel,
+				"userid":    ev.User,
+			}).WithError(err).Error("Could not post askHappinessSurvey question")
 		}
-		s.Logger.Printf("[INFO] askHappinessSurvey question posted.\n")
+		log.WithFields(log.Fields{
+			"channelid": ev.Channel,
+			"userid":    ev.User,
+		}).Info("askHappinessSurvey question posted")
 	}
 	return nil
 }
@@ -82,9 +89,13 @@ func (s *Slack) resultHappinessSurvey(userid, result string) error {
 
 	err := database.DB.QueryRow(sqlWrite, userid, result, date, time).Scan(&userid)
 	if err != nil {
-		s.Logger.Printf("[ERROR] Couldn't insert in the database the result of the happiness survey for user ID %s.\n %s", userid, err)
+		log.WithFields(log.Fields{
+			"userid": userid,
+		}).WithError(err).Error("Couldn't insert in the database the result of the happiness survey")
 	}
-	s.Logger.Printf("[INFO] Happiness Survey Result written in database.\n")
+	log.WithFields(log.Fields{
+		"userid": userid,
+	}).Info("Happiness Survey Result written in database")
 	return nil
 }
 
@@ -129,8 +140,14 @@ func (s *Slack) askHappinessSurveyScheduled(userid string) error {
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
-		s.Logger.Printf("[ERROR] Could not post askHappinessSurveyScheduled message: %s\n", err)
+		log.WithFields(log.Fields{
+			"channelid": channelid,
+			"userid":    userid,
+		}).WithError(err).Error("Could not post askHappinessSurveyScheduled message")
 	}
-	s.Logger.Printf("[INFO] Message for askHappinessSurveyScheduled posted.\n")
+	log.WithFields(log.Fields{
+		"channelid": channelid,
+		"userid":    userid,
+	}).Info("Message for askHappinessSurveyScheduled posted")
 	return nil
 }

@@ -3,9 +3,9 @@ package bot
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/jasonlvhit/gocron"
 	"github.com/matthieudolci/hatcher/database"
 )
@@ -24,7 +24,7 @@ func (s *Slack) GetTimeAndUsersForScheduler() error {
 	rows, err := database.DB.Query("SELECT to_char(happiness_schedule, 'HH24:MI'), to_char(standup_schedule, 'HH24:MI'), userid FROM hatcher.users;")
 	if err != nil {
 		if err == sql.ErrNoRows {
-			s.Logger.Printf("[ERROR] There is no result time or userid.\n")
+			log.WithError(err).Error("There is no result time or userid")
 		}
 	}
 	defer rows.Close()
@@ -37,7 +37,7 @@ func (s *Slack) GetTimeAndUsersForScheduler() error {
 		scheduledata := ScheduleData{}
 		err = rows.Scan(&scheduledata.TimesHappiness, &scheduledata.TimesStandup, &scheduledata.UserID)
 		if err != nil {
-			s.Logger.Printf("[ERROR] During the scan.\n")
+			log.WithError(err).Error("During the scan")
 		}
 		fmt.Println(scheduledata)
 		s.runScheduler(scheduledata.TimesStandup, scheduledata.TimesHappiness, scheduledata.UserID)
@@ -46,7 +46,7 @@ func (s *Slack) GetTimeAndUsersForScheduler() error {
 	// get any error encountered during iteration
 	err = rows.Err()
 	if err != nil {
-		s.Logger.Printf("[ERROR] During iteration.\n")
+		log.WithError(err).Error("During iteration")
 	}
 	return nil
 }
@@ -67,14 +67,18 @@ func (s *Slack) runScheduler(timeStandup, timeHappiness, userid string) error {
 	scheduler.Every(1).Wednesday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
 	scheduler.Every(1).Thursday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
 	scheduler.Every(1).Friday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
-	s.Logger.Printf("[INFO] Standup schedule tasks for user %s posted.\n", userid)
+	log.WithFields(log.Fields{
+		"userid": userid,
+	}).Info("Standup schedule tasks posted")
 
 	scheduler.Every(1).Monday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
 	scheduler.Every(1).Tuesday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
 	scheduler.Every(1).Wednesday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
 	scheduler.Every(1).Thursday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
 	scheduler.Every(1).Friday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
-	s.Logger.Printf("[INFO] Happiness Survey schedule tasks for user %s posted.\n", userid)
+	log.WithFields(log.Fields{
+		"userid": userid,
+	}).Info("appiness Survey schedule tasks posted")
 
 	return nil
 }

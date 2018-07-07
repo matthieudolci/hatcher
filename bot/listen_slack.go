@@ -3,10 +3,10 @@ package bot
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/nlopes/slack"
 )
 
@@ -18,8 +18,6 @@ type Slack struct {
 	User   string
 	UserID string
 
-	Logger *log.Logger
-
 	Client       *slack.Client
 	MessageEvent *slack.MessageEvent
 }
@@ -28,7 +26,7 @@ type Slack struct {
 func New() (*Slack, error) {
 	token := os.Getenv("SLACK_TOKEN")
 	if len(token) == 0 {
-		return nil, fmt.Errorf("could not discover API token")
+		return nil, fmt.Errorf("Could not discover API token")
 	}
 
 	return &Slack{Client: slack.New(token), Token: token, Name: "hatcher"}, nil
@@ -40,13 +38,16 @@ func New() (*Slack, error) {
 func (s *Slack) Run(ctx context.Context) error {
 	authTest, err := s.Client.AuthTest()
 	if err != nil {
-		return fmt.Errorf("did not authenticate: %+v", err)
+		return fmt.Errorf("Did not authenticate: %+v", err)
 	}
 
 	s.User = authTest.User
 	s.UserID = authTest.UserID
 
-	s.Logger.Printf("[INFO] bot is now registered as %s (%s)\n", s.User, s.UserID)
+	log.WithFields(log.Fields{
+		"username": s.User,
+		"userid":   s.UserID,
+	}).Info("Bot is now registered")
 
 	go s.run(ctx)
 	return nil
@@ -54,13 +55,13 @@ func (s *Slack) Run(ctx context.Context) error {
 }
 
 func (s *Slack) run(ctx context.Context) {
-	slack.SetLogger(s.Logger)
+	// slack.SetLogger()
 	// s.Client.SetDebug(true)
 
 	rtm := s.Client.NewRTM()
 	go rtm.ManageConnection()
 
-	s.Logger.Printf("[INFO] now listening for incoming messages...")
+	log.Info("Now listening for incoming messages...")
 
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
@@ -80,34 +81,51 @@ func (s *Slack) run(ctx context.Context) {
 
 			user, err := s.Client.GetUserInfo(ev.User)
 			if err != nil {
-				s.Logger.Printf("[WARN] could not grab user information: %s", ev.User)
+				log.WithFields(log.Fields{
+					"userid": ev.User,
+				}).Printf("Could not grab user information.")
 				continue
 			}
 
-			s.Logger.Printf("[DEBUG] received message from %s (%s)\n", user.Profile.RealName, ev.User)
+			log.WithFields(log.Fields{
+				"username": user.Profile.RealName,
+				"userid":   ev.User,
+			}).Info("Received message")
 
 			err = s.askSetup(ev)
 			if err != nil {
-				s.Logger.Printf("[ERROR] posting setup reply to user (%s): %+v\n", ev.User, err)
+				log.WithFields(log.Fields{
+					"username": user.Profile.RealName,
+					"userid":   ev.User,
+				}).WithError(err).Error("Posting setup reply to user")
 			}
 
 			err = s.askRemove(ev)
 			if err != nil {
-				s.Logger.Printf("[ERROR] posting remove reply to user (%s): %+v\n", ev.User, err)
+				log.WithFields(log.Fields{
+					"username": user.Profile.RealName,
+					"userid":   ev.User,
+				}).WithError(err).Error("Posting remove reply to user")
 			}
 
 			err = s.askHappinessSurvey(ev)
 			if err != nil {
-				s.Logger.Printf("[ERROR] posting happiness survey reply to user (%s): %+v\n", ev.User, err)
+				log.WithFields(log.Fields{
+					"username": user.Profile.RealName,
+					"userid":   ev.User,
+				}).WithError(err).Error("Posting happiness survey reply to user")
 			}
 
 			err = s.standupYesterday(ev)
 			if err != nil {
-				s.Logger.Printf("[ERROR] posting yesterday standup note question to user (%s): %+v\n", ev.User, err)
+				log.WithFields(log.Fields{
+					"username": user.Profile.RealName,
+					"userid":   ev.User,
+				}).WithError(err).Error("Posting yesterday standup note question to user")
 			}
 
 		case *slack.RTMError:
-			s.Logger.Printf("[ERROR] %s\n", ev.Error())
+			log.Errorf("%s", ev.Error())
 		}
 	}
 }

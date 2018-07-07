@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"os"
 
 	_ "expvar"
 	_ "net/http/pprof"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/hatcher/bot"
 	"github.com/matthieudolci/hatcher/database"
 )
@@ -17,27 +16,25 @@ func main() {
 	database.InitDb()
 	defer database.DB.Close()
 
-	lg := log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)
 	ctx := context.Background()
 
 	s, err := bot.New()
 	if err != nil {
-		lg.Fatal(err)
+		log.Fatal(err)
 	}
-	s.Logger = lg
 
 	if err := s.Run(ctx); err != nil {
-		s.Logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	if err := s.GetTimeAndUsersForScheduler(); err != nil {
-		s.Logger.Println(err)
+		log.WithError(err)
 	}
 
 	handler, err := s.APIHandler()
 	if err != nil {
-		s.Logger.Fatal(err)
+		log.Fatal(err)
 	}
 
-	lg.Fatal(http.ListenAndServe(":9191", handler))
+	log.Fatal(http.ListenAndServe(":9191", handler))
 }

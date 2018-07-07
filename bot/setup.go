@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
 )
@@ -56,9 +57,12 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 			slack.MsgOptionPostMessageParameters(params),
 		)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not post askSetup question: %s\n", err)
+			log.WithError(err).Error("Could not post askSetup question")
 		}
-		s.Logger.Printf("[INFO] Message for askSetup posted.\n")
+		log.WithFields(log.Fields{
+			"userid":  ev.User,
+			"channel": ev.Channel,
+		}).Info("Message for askSetup posted")
 	}
 	return nil
 }
@@ -81,9 +85,16 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) error {
 		RETURNING id`
 		err = database.DB.QueryRow(sqlWrite, userid, email, fullname, displayname).Scan(&userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not create user %s.\n %s", fullname, err)
+			log.WithFields(log.Fields{
+				"username": fullname,
+				"userid":   userid,
+			}).WithError(err).Error("Could not create user")
 		}
-		s.Logger.Printf("[INFO] User (%s) was created.\n", fullname)
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Info("User was created")
+
 	// If the user exist it will update it
 	case nil:
 		sqlUpdate := `
@@ -93,9 +104,15 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) error {
 		RETURNING id;`
 		err = database.DB.QueryRow(sqlUpdate, userid, fullname, email, displayname).Scan(&userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Couldn't update user %s with ID %s in the database: %s\n", fullname, userid, err)
+			log.WithFields(log.Fields{
+				"username": fullname,
+				"userid":   userid,
+			}).WithError(err).Error("Couldn't update user in the database")
 		}
-		s.Logger.Printf("[INFO] User (%s) was updated.\n", fullname)
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Info("User was creaupdatedted")
 	default:
 	}
 	return nil
@@ -146,10 +163,15 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 			slack.MsgOptionPostMessageParameters(params),
 		)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Could not post message for askRemove: %s\n", err)
+			log.WithFields(log.Fields{
+				"channel": ev.Channel,
+				"userid":  ev.User,
+			}).WithError(err).Error("Could not post message for askRemove")
 		}
-		s.Logger.Printf("[INFO] Message for askRemove posted.\n")
-
+		log.WithFields(log.Fields{
+			"channel": ev.Channel,
+			"userid":  ev.User,
+		}).Info("Message for askRemove posted")
 	}
 	return nil
 }
@@ -164,16 +186,25 @@ func (s *Slack) removeBot(userid, fullname string) error {
 	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
 	case sql.ErrNoRows:
-		s.Logger.Printf("[DEBUG] User %s was not registered.\n", fullname)
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Debug("User is not registered")
 	case nil:
 		sqlDelete := `
 		DELETE FROM hatcher.users
 		WHERE userid = $1;`
 		_, err = database.DB.Exec(sqlDelete, userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Couldn't not check if user %s with ID %s exist in the database: %s\n", fullname, userid, err)
+			log.WithFields(log.Fields{
+				"userid":   userid,
+				"username": fullname,
+			}).WithError(err).Error("Couldn't not check if user exist in the database")
 		}
-		s.Logger.Printf("[INFO] User %s with id %s was deleted.\n", fullname, userid)
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Info("User was deleted")
 	default:
 	}
 	return nil
@@ -207,9 +238,15 @@ func (s *Slack) askWhoIsManager(channelid, userid string) error {
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
-		s.Logger.Print("[ERROR] Could not post message askWhoIsManager: %s\n", err)
+		log.WithFields(log.Fields{
+			"userid":  userid,
+			"channel": channelid,
+		}).WithError(err).Error("Could not post message askWhoIsManager")
 	}
-	s.Logger.Printf("[INFO] Message for askWhoIsManager posted.\n")
+	log.WithFields(log.Fields{
+		"userid":  userid,
+		"channel": channelid,
+	}).Info("Message for askWhoIsManager posted")
 	return nil
 }
 
@@ -222,10 +259,11 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) err
 	sqlCheckID := `SELECT userid FROM hatcher.users WHERE userid=$1;`
 	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
-	// if user doesnt exit, exit
 	case sql.ErrNoRows:
-		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
-	// If the user exist we update the column managerid
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Debug("User is not registered")
 	case nil:
 		sqlUpdate := `
 		UPDATE hatcher.users
@@ -234,9 +272,17 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) err
 		RETURNING id;`
 		err = database.DB.QueryRow(sqlUpdate, userid, managerid).Scan(&userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Couldn't update the manager %s for the user %s with ID %s: %s\n", managername, fullname, userid, err)
+			log.WithFields(log.Fields{
+				"userid":    userid,
+				"username":  fullname,
+				"managerid": managerid,
+			}).WithError(err).Error("Couldn't update the manager")
 		}
-		s.Logger.Printf("[INFO] Manager %s was added to user %s.\n", managername, fullname)
+		log.WithFields(log.Fields{
+			"username":  fullname,
+			"userid":    userid,
+			"managerid": managerid,
+		}).Info("Manager was added to user")
 	default:
 	}
 	return nil
@@ -278,9 +324,15 @@ func (s *Slack) askIfManager(channelid, userid string) error {
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
-		s.Logger.Printf("[ERROR] Could not post message for askIfManager: %s\n", err)
+		log.WithFields(log.Fields{
+			"userid":  userid,
+			"channel": channelid,
+		}).WithError(err).Error("Could not post message for askIfManager")
 	}
-	s.Logger.Printf("[INFO] Message for askIfManager posted.\n")
+	log.WithFields(log.Fields{
+		"userid":  userid,
+		"channel": channelid,
+	}).Info("Message for askIfManager posted")
 	return nil
 }
 
@@ -293,10 +345,11 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) error {
 	sqlCheckID := `SELECT userid FROM hatcher.users WHERE userid=$1;`
 	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
-	// if user doesnt exit, exit
 	case sql.ErrNoRows:
-		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
-	// If the user exist we update the column ismanager
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Debug("User is not registered")
 	case nil:
 		sqlUpdate := `
 		UPDATE hatcher.users
@@ -305,12 +358,21 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) error {
 		RETURNING id;`
 		err = database.DB.QueryRow(sqlUpdate, userid, ismanager).Scan(&userid)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Couldn't update if user %s with ID %s is a manager in the database: %s\n", fullname, userid, err)
+			log.WithFields(log.Fields{
+				"userid":   userid,
+				"username": fullname,
+			}).WithError(err).Error("Couldn't update if user is a manager")
 		}
 		if ismanager == "true" {
-			s.Logger.Printf("[DEBUG] %s is now setup as a manager.\n", fullname)
+			log.WithFields(log.Fields{
+				"username": fullname,
+				"userid":   userid,
+			}).Info("Now setup as a manager")
 		}
-		s.Logger.Printf("[INFO] %s is not a manager.\n", fullname)
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Info("Is not setup as a manager")
 	default:
 	}
 	return nil
@@ -392,9 +454,15 @@ func (s *Slack) askTimeHappinessSurvey(channelid, userid string) error {
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
-		s.Logger.Printf("[ERROR] Could not post message askTimeHappinessSurvey: %s\n", err)
+		log.WithFields(log.Fields{
+			"userid":  userid,
+			"channel": channelid,
+		}).WithError(err).Error("Could not post message askTimeHappinessSurvey")
 	}
-	s.Logger.Printf("[INFO] Message askTimeHappinessSurvey posted.\n")
+	log.WithFields(log.Fields{
+		"userid":  userid,
+		"channel": channelid,
+	}).Info("Message askTimeHappinessSurvey posted")
 	return nil
 }
 
@@ -407,10 +475,11 @@ func (s *Slack) insertTimeHappinessSurvey(userid, fullname, time string) error {
 	sqlCheckID := `SELECT userid FROM hatcher.users WHERE userid=$1;`
 	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
-	// if user doesnt exit, exit
 	case sql.ErrNoRows:
-		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
-	// If the user exist we update the column ismanager
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Debug("User is not registered")
 	case nil:
 		sqlUpdate := `
 		UPDATE hatcher.users
@@ -419,10 +488,15 @@ func (s *Slack) insertTimeHappinessSurvey(userid, fullname, time string) error {
 		RETURNING id;`
 		err = database.DB.QueryRow(sqlUpdate, userid, time).Scan(&id)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Couldn't update the time of the happiness survey for user %s with ID %s: %s\n", fullname, userid, err)
+			log.WithFields(log.Fields{
+				"userid":   userid,
+				"username": fullname,
+			}).WithError(err).Error("Couldn't update the time of the happiness survey")
 		}
-		s.Logger.Printf("[INFO] Time of the happiness survey for user %s with ID %s updated.\n", fullname, userid)
-
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Info("Time of the happiness survey for user was updated")
 	default:
 	}
 	return nil
@@ -488,10 +562,15 @@ func (s *Slack) askTimeStandup(channelid, userid string) error {
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
-		s.Logger.Printf("[ERROR] Could not post message askTimeStandup: %s\n", err)
+		log.WithFields(log.Fields{
+			"userid":  userid,
+			"channel": channelid,
+		}).WithError(err).Error("Could not post message askTimeStandup")
 	}
-	s.Logger.Printf("[INFO] Message askTimeStandup posted.\n")
-
+	log.WithFields(log.Fields{
+		"userid":  userid,
+		"channel": channelid,
+	}).Info("Message askTimeStandup posted")
 	return nil
 }
 
@@ -506,7 +585,10 @@ func (s *Slack) insertTimeStandup(userid, fullname, time string) error {
 	switch err := row.Scan(&id); err {
 	// if user doesnt exit, exit
 	case sql.ErrNoRows:
-		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Debug("User is not registered")
 	// If the user exist we update the column ismanager
 	case nil:
 		sqlUpdate := `
@@ -516,10 +598,15 @@ func (s *Slack) insertTimeStandup(userid, fullname, time string) error {
 		RETURNING id;`
 		err = database.DB.QueryRow(sqlUpdate, userid, time).Scan(&id)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Couldn't update the time for standup for user %s with ID %s: %s\n", fullname, userid, err)
+			log.WithFields(log.Fields{
+				"userid":   userid,
+				"username": fullname,
+			}).WithError(err).Error("Couldn't update the standup time")
 		}
-		s.Logger.Printf("[INFO] Time for standup for user %s with ID %s updated.\n", fullname, userid)
-
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Info("Standup time updated")
 	default:
 	}
 	return nil
@@ -553,10 +640,15 @@ func (s *Slack) askWhichChannelStandup(channelid, userid string) error {
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
-		s.Logger.Print("[ERROR] Could not post message askWhoIsManager: %s\n", err)
+		log.WithFields(log.Fields{
+			"userid":  userid,
+			"channel": channelid,
+		}).WithError(err).Error("Could not post message askWhichChannelStandup")
 	}
-	s.Logger.Printf("[INFO] Message for askWhoIsManager posted.\n")
-
+	log.WithFields(log.Fields{
+		"userid":  userid,
+		"channel": channelid,
+	}).Info("Message for askWhichChannelStandup posted")
 	return nil
 }
 
@@ -569,9 +661,11 @@ func (s *Slack) insertChannelStandup(userid, fullname, channel string) error {
 	sqlCheckID := `SELECT userid FROM hatcher.users WHERE userid=$1;`
 	row := database.DB.QueryRow(sqlCheckID, userid)
 	switch err := row.Scan(&id); err {
-	// if user doesnt exit
 	case sql.ErrNoRows:
-		s.Logger.Printf("[DEBUG] User %s is not registered.", fullname)
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Debug("User is not registered")
 	case nil:
 		sqlUpdate := `
 		UPDATE hatcher.users
@@ -580,10 +674,15 @@ func (s *Slack) insertChannelStandup(userid, fullname, channel string) error {
 		RETURNING id;`
 		err = database.DB.QueryRow(sqlUpdate, userid, channel).Scan(&id)
 		if err != nil {
-			s.Logger.Printf("[ERROR] Couldn't update the channel for the standup results for user %s with ID %s: %s\n", fullname, userid, err)
+			log.WithFields(log.Fields{
+				"userid":   userid,
+				"username": fullname,
+			}).WithError(err).Error("Couldn't update the channel for the standup results")
 		}
-		s.Logger.Printf("[INFO] Channel of the standup results for user %s with ID %s updated.\n", fullname, userid)
-
+		log.WithFields(log.Fields{
+			"username": fullname,
+			"userid":   userid,
+		}).Info("Channel for standup results updated")
 	default:
 	}
 	return nil
