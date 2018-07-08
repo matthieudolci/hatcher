@@ -5,7 +5,7 @@
 Hatcher is a slack bot written in go. It can:
 
 - Send a survey to users to ask how they are doing, and provides an API to export those results.
-- (WIP) Send and save standup notes 
+- Send and save standup notes 
 
 ## Slack App Creation:
 

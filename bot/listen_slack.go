@@ -124,6 +124,22 @@ func (s *Slack) run(ctx context.Context) {
 				}).WithError(err).Error("Posting yesterday standup note question to user")
 			}
 
+			err = s.askSetupTimeHappinessSurvey(ev)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"username": user.Profile.RealName,
+					"userid":   ev.User,
+				}).WithError(err).Error("Posting happiness survey question question to user")
+			}
+
+			err = s.askRemoveHappiness(ev)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"username": user.Profile.RealName,
+					"userid":   ev.User,
+				}).WithError(err).Error("Posting remove from happiness survey question question to user")
+			}
+
 		case *slack.RTMError:
 			log.Errorf("%s", ev.Error())
 		}

@@ -17,7 +17,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 	if r.URL.Path != "/slack" {
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(fmt.Sprintf("incorrect path: %s", r.URL.Path)))
+		_, err := w.Write([]byte(fmt.Sprintf("incorrect path: %s", r.URL.Path)))
+		if err != nil {
+			log.WithError(err).Error("Could not post the message incorrect path")
+		}
 		log.WithFields(log.Fields{
 			"urlpath": r.URL.Path,
 		}).Error("incorrect path")
@@ -26,8 +29,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 
 	if r.Body == nil {
 		w.WriteHeader(http.StatusNotAcceptable)
-		w.Write([]byte("empty body"))
-		log.Error("Empty body")
+		_, err := w.Write([]byte("empty body"))
+		if err != nil {
+			log.WithError(err).Error("empty body")
+		}
 		return
 	}
 	defer r.Body.Close()
@@ -35,8 +40,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	err := r.ParseForm()
 	if err != nil {
 		w.WriteHeader(http.StatusGone)
-		w.Write([]byte("could not parse body"))
-		log.Error("Could not parse body")
+		_, err = w.Write([]byte("could not parse body"))
+		if err != nil {
+			log.WithError(err).Error("could not parse body")
+		}
 		return
 	}
 
@@ -44,8 +51,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	reply := r.PostFormValue("payload")
 	if len(reply) == 0 {
 		w.WriteHeader(http.StatusNoContent)
-		w.Write([]byte("could not find payload"))
-		log.Error("Could not find payload")
+		_, err = w.Write([]byte("could not find payload"))
+		if err != nil {
+			log.WithError(err).Error("Could not find payload")
+		}
 		return
 	}
 
@@ -54,8 +63,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 	err = json.NewDecoder(strings.NewReader(reply)).Decode(&payload)
 	if err != nil {
 		w.WriteHeader(http.StatusGone)
-		w.Write([]byte("could not process payload"))
-		log.Error("Could not process payload")
+		_, err = w.Write([]byte("could not process payload"))
+		if err != nil {
+			log.WithError(err).Error("Could not process payload")
+		}
 		return
 	}
 
@@ -88,7 +99,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			}
 			log.Info("Started resultHappinessSurvey for value happinessGood")
 
-			w.Write([]byte("Awesome, have a wonderful day!"))
+			_, err = w.Write([]byte("Awesome, have a wonderful day!"))
+			if err != nil {
+				log.WithError(err).Error("Could not post the message reply happiness Good")
+			}
 		}
 
 	case "happinessNeutral":
@@ -103,7 +117,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			}
 			log.Info("Started resultHappinessSurvey for value happinessNeutral")
 
-			w.Write([]byte("I hope your day will get better :slightly_smiling_face:"))
+			_, err = w.Write([]byte("I hope your day will get better :slightly_smiling_face:"))
+			if err != nil {
+				log.WithError(err).Error("Could not post the message reply happiness Neutral")
+			}
 		}
 	case "happinessSad":
 		answer := fmt.Sprintf(payload.Actions[0].Value)
@@ -117,13 +134,19 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			}
 			log.Info("Started resultHappinessSurvey for value happinessSad")
 
-			w.Write([]byte("I am sorry to hear that. Take all the time you need to feel better."))
+			_, err = w.Write([]byte("I am sorry to hear that. Take all the time you need to feel better."))
+			if err != nil {
+				log.WithError(err).Error("Could not post the message reply happiness sad")
+			}
 		}
 
 	case "SetupYes":
-		w.Write([]byte(":white_check_mark: - Starting the setup of your user."))
+		_, err := w.Write([]byte(":white_check_mark: - Starting the setup of your user."))
+		if err != nil {
+			log.WithError(err).Error("Could not post the message Starting the setup of your user")
+		}
 
-		err := s.initBot(userid, email, fullname, displayname)
+		err = s.initBot(userid, email, fullname, displayname)
 		if err != nil {
 			log.WithError(err).Error("Could not start initBot for value SetupYes")
 		}
@@ -136,7 +159,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		log.Info("Start askWhoIsManager")
 
 	case "SetupNo":
-		w.Write([]byte("No worries, let me know if you want to later on!"))
+		_, err := w.Write([]byte("No worries, let me know if you want to later on!"))
+		if err != nil {
+			log.WithError(err).Error("Could not post the message No worries, let me know if you want to later on")
+		}
 
 	case "RemoveYes":
 		err = s.removeBot(userid, fullname)
@@ -151,9 +177,30 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		log.Info("Started GetTimeAndUsersHappinessSurvey for value RemoveYes")
 
-		w.Write([]byte("Sorry to see you go. Your user was deleted."))
+		_, err = w.Write([]byte("Sorry to see you go. Your user was deleted."))
+		if err != nil {
+			log.WithError(err).Error("Could not post the message Sorry to see you go")
+		}
 
 	case "RemoveNo":
+		_, err := w.Write([]byte("Glad you decided to stay :smiley:"))
+		if err != nil {
+			log.WithError(err).Error("Could not post the message Glad you decided to stay")
+		}
+
+	case "RemoveHapinnessYes":
+		err := s.removeHappiness(userid, fullname)
+		if err != nil {
+			log.WithError(err).Error("Could not start removeHappiness")
+		}
+		log.Info("Started removeHappiness for value RemoveHapinnessYes")
+
+		_, err = w.Write([]byte("Sorry to see you go. Your user was removed from the happiness survey"))
+		if err != nil {
+			log.WithError(err).Error("Could not post the message when user cancel happiness survey")
+		}
+
+	case "RemoveHappinessNo":
 		w.Write([]byte("Glad you decided to stay :smiley:"))
 
 	case "isManagerYes":
@@ -168,7 +215,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			}
 			log.Info("Start setupIsManager for value isManagerYes")
 
-			w.Write([]byte(fmt.Sprintf(":white_check_mark: - You are setup as a manager.")))
+			_, err = w.Write([]byte(fmt.Sprintf(":white_check_mark: - You are setup as a manager.")))
+			if err != nil {
+				log.WithError(err).Error("Could not post You are setup as a manager message")
+			}
 		}
 
 	case "isManagerNo":
@@ -183,7 +233,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 			}
 			log.Info("Start setupIsManager for value isManagerNo")
 
-			w.Write([]byte(fmt.Sprintf(":white_check_mark: - You are not setup as a manager.")))
+			_, err = w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!\nYou can opt-in to the daily happiness survey by sending `happiness setup`", displayname)))
+			if err != nil {
+				log.WithError(err).Error("Could not post the final message of the setup for none manager user")
+			}
 		}
 	}
 
@@ -205,7 +258,33 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		log.Info("Started initManager for name ManagerChosen")
 
-		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager.", managername)))
+		_, err = w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s was setup as your manager.", managername)))
+		if err != nil {
+			log.WithError(err).Error("Could not post the you are setup as a manager")
+		}
+
+		timestandup := s.getStandupTimeFromManager(managerid)
+		channel := s.getStandupChannelFromManager(managerid)
+
+		if len(timestandup) > 0 {
+			err = s.updateTimeStandup(managerid, userid, timestandup)
+			if err != nil {
+				log.WithError(err).Error("Could not start updateTimeStandup for name ManagerChosen")
+			}
+			log.Info("Started updateTimeStandup for name ManagerChosen")
+		} else {
+			err = s.updateTimeStandup(managerid, userid, "NULL")
+			if err != nil {
+				log.WithError(err).Error("Could not start updateTimeStandup for name ManagerChosen")
+			}
+			log.Info("Started updateTimeStandup for name ManagerChosen")
+		}
+
+		err = s.updateChannelStandup(managerid, userid, channel)
+		if err != nil {
+			log.WithError(err).Error("Could not start updateTimeStandup for name ManagerChosen")
+		}
+		log.Info("Started updateTimeStandup for name ManagerChosen")
 
 		err = s.askIfManager(channelid, userid)
 		if err != nil {
@@ -213,13 +292,14 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		log.Info("Started askIfManager for name ManagerChosen")
 
-	case "isManagerYes", "isManagerNo":
-		err := s.askTimeHappinessSurvey(channelid, userid)
+	case "isManagerYes":
+		err = s.askTimeStandup(channelid, userid)
 		if err != nil {
-			log.WithError(err).Error("Could not start askTimeHappinessSurveyfor for name isManagerYes or isManagerNo")
+			log.WithError(err).Error("Could not start askTimeStandup for name HappinessTime")
 		}
-		log.Info("Started askTimeHappinessSurveyfor for name isManagerYes or isManagerNo")
-	case "HappinessTime":
+		log.Info("Start askTimeStandup for name HappinessTime")
+
+	case "SetupHappinessTime":
 		time := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
 
 		err := s.insertTimeHappinessSurvey(userid, fullname, time)
@@ -228,13 +308,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		log.Info("Start insertTimeHappinessSurvey for name HappinessTime")
 
-		err = s.askTimeStandup(channelid, userid)
+		_, err = w.Write([]byte(fmt.Sprintf(":white_check_mark: - Time for happiness survey selected")))
 		if err != nil {
-			log.WithError(err).Error("Could not start askTimeStandup for name HappinessTime")
+			log.WithError(err).Error("Could not post the message Time for happiness servey selected")
 		}
-		log.Info("Start insertTimaskTimeStandupeHappinessSurvey for name HappinessTime")
-
-		w.Write([]byte(fmt.Sprintf(":white_check_mark: - Time for happiness survey selected")))
 
 	case "StandupTime":
 		time := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
@@ -251,7 +328,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		log.Info("Start askWhichChannelStandup for name StandupTime")
 
-		w.Write([]byte(fmt.Sprintf(":white_check_mark: - Time for standup selected")))
+		_, err = w.Write([]byte(fmt.Sprintf(":white_check_mark: - Team standup setup")))
+		if err != nil {
+			log.WithError(err).Error("Could not post the message Team standup setup")
+		}
 
 	case "ChannelStandupChosen":
 		channel := fmt.Sprintf(payload.Actions[0].SelectedOptions[0].Value)
@@ -268,7 +348,10 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		log.Info("Start GetTimeAndUsersForScheduler for name ChannelStandupChosen")
 
-		w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!", displayname)))
+		_, err = w.Write([]byte(fmt.Sprintf(":white_check_mark: - %s your user is now setup!", displayname)))
+		if err != nil {
+			log.WithError(err).Error("Could not post the message Your user is now setup")
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
