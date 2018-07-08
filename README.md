@@ -35,15 +35,18 @@ Hatcher is a slack bot written in go. It can:
 ## How to use it:
 
 Your users will have to interact a first time with Hatcher by sending a DM to it with the following words:
--   hello
--   hi
--   setup
+-   `hello`
+-   `hi`
+-   `setup`
 
 It will trigger few questions that need to be answered before the user can use the bot.
 
-To know how to use the happiness survey go [here](/docs/happiness-survey.md)
+You can find out all the bot commands available send a DM to Hatcher:
+- `help`
 
-To know how to use the happiness survey api go [here](/docs/api-happiness-survey.md) 
+
+## How to use the API
+Hatcher API is documentation is available [here](https://documenter.getpostman.com/view/3454833/RWM9uVgF) 
 
 ## Resources:
 https://blog.gopheracademy.com/advent-2017/go-slackbot/

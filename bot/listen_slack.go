@@ -129,7 +129,7 @@ func (s *Slack) run(ctx context.Context) {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
 					"userid":   ev.User,
-				}).WithError(err).Error("Posting happiness survey question question to user")
+				}).WithError(err).Error("Posting happiness survey question to user")
 			}
 
 			err = s.askRemoveHappiness(ev)
@@ -137,7 +137,15 @@ func (s *Slack) run(ctx context.Context) {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
 					"userid":   ev.User,
-				}).WithError(err).Error("Posting remove from happiness survey question question to user")
+				}).WithError(err).Error("Posting remove from happiness survey question to user")
+			}
+
+			err = s.askHelp(ev)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"username": user.Profile.RealName,
+					"userid":   ev.User,
+				}).WithError(err).Error("Posting help message")
 			}
 
 		case *slack.RTMError:

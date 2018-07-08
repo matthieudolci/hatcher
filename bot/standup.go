@@ -37,6 +37,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 			log.WithError(err).Error("Failed to post yesterday standup question")
 		}
 		log.WithFields(log.Fields{
+			"userid":    ev.User,
 			"timestamp": timestamp,
 		}).Info("Timestamp of the standupYesterday message")
 
