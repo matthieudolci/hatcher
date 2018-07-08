@@ -46,7 +46,7 @@ You can find out all the bot commands available send a DM to Hatcher:
 
 
 ## How to use the API
-Hatcher API is documentation is available [here](https://documenter.getpostman.com/view/3454833/RWM9uVgF) 
+Hatcher API documentation is available [here](https://documenter.getpostman.com/view/3454833/RWM9uVgF) 
 
 ## Resources:
 https://blog.gopheracademy.com/advent-2017/go-slackbot/

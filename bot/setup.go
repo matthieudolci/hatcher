@@ -292,6 +292,13 @@ func (s *Slack) askWhoIsManager(channelid, userid string) error {
 				Type:       "select",
 				DataSource: "users",
 			},
+			{
+				Name:  "NoManagerChosen",
+				Text:  "No Manager",
+				Type:  "button",
+				Value: "NoManagerChosen",
+				Style: "danger",
+			},
 		},
 	}
 	params.Attachments = []slack.Attachment{attachment}
@@ -346,7 +353,7 @@ func (s *Slack) askIfManager(channelid, userid string) error {
 
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
-		Text:       "Are you a manager?",
+		Text:       "Do you manage a team with a daily standup?",
 		CallbackID: fmt.Sprintf("ismanager_%s", userid),
 		Color:      "#AED6F1",
 		Actions: []slack.AttachmentAction{

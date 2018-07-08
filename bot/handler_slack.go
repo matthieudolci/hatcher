@@ -292,6 +292,17 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		log.Info("Started askIfManager for name ManagerChosen")
 
+	case "NoManagerChosen":
+		_, err = w.Write([]byte(fmt.Sprintf(":white_check_mark: - No manager selected")))
+		if err != nil {
+			log.WithError(err).Error("Could not post the you are setup as a manager")
+		}
+		err = s.askIfManager(channelid, userid)
+		if err != nil {
+			log.WithError(err).Error("Could not start askIfManager for name NoManagerChosen")
+		}
+		log.Info("Started askIfManager for name NoManagerChosen")
+
 	case "isManagerYes":
 		err = s.askTimeStandup(channelid, userid)
 		if err != nil {
