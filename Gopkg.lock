@@ -14,12 +14,6 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jasonlvhit/gocron"
-  packages = ["."]
-  revision = "54194c9749d48b073c9aeb2c787b6882e95dd0cd"
-
-[[projects]]
   name = "github.com/julienschmidt/httprouter"
   packages = ["."]
   revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
@@ -33,6 +27,12 @@
     "oid"
   ]
   revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/matthieudolci/gocron"
+  packages = ["."]
+  revision = "9349a22bb5eb7862fcc435828c2252641a1cba95"
 
 [[projects]]
   name = "github.com/nlopes/slack"
@@ -64,6 +64,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "de7c3d7df073abc57bc9640c348c3e10e81b6c9b148d5d26e205d236e00ec316"
+  inputs-digest = "46c9aaa4ef28dd9bbb387595901e817e61708fc8832c3d81bf3a344d08bf6a23"
   solver-name = "gps-cdcl"
   solver-version = 1

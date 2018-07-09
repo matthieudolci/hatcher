@@ -98,7 +98,7 @@ func (j *Job) run() (result []reflect.Value, err error) {
 	for k, param := range params {
 		in[k] = reflect.ValueOf(param)
 	}
-	result = f.Call(in)
+	go f.Call(in) // spin off a goroutine so as not to delay subsequent tasks
 	j.lastRun = time.Now()
 	j.scheduleNextRun()
 	return

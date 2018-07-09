@@ -5,7 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/jasonlvhit/gocron"
+	"github.com/matthieudolci/gocron"
 	"github.com/matthieudolci/hatcher/database"
 )
 
