@@ -41,9 +41,7 @@ Your users will have to interact a first time with Hatcher by sending a DM to it
 
 It will trigger few questions that need to be answered before the user can use the bot.
 
-You can find out all the bot commands available send a DM to Hatcher:
-- `help`
-
+You can find out all the bot commands available by sending `help` to Hatcher
 
 ## How to use the API
 Hatcher API documentation is available [here](https://documenter.getpostman.com/view/3454833/RWM9uVgF) 

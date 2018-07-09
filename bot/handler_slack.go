@@ -286,6 +286,12 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		}
 		log.Info("Started updateTimeStandup for name ManagerChosen")
 
+		err = s.GetTimeAndUsersForScheduler()
+		if err != nil {
+			log.WithError(err).Error("Could not start GetTimeAndUsersForScheduler for name ChannelStandupChosen")
+		}
+		log.Info("Start GetTimeAndUsersForScheduler for name ChannelStandupChosen")
+
 		err = s.askIfManager(channelid, userid)
 		if err != nil {
 			log.WithError(err).Error("Could not start askIfManager for name ManagerChosen")
@@ -297,6 +303,7 @@ func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httpr
 		if err != nil {
 			log.WithError(err).Error("Could not post the you are setup as a manager")
 		}
+
 		err = s.askIfManager(channelid, userid)
 		if err != nil {
 			log.WithError(err).Error("Could not start askIfManager for name NoManagerChosen")
