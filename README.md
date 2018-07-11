@@ -1,6 +1,6 @@
 # hatcher	
 
-[![Build Status](https://travis-ci.com/matthieudolci/hatcher.svg?branch=master)](https://travis-ci.com/matthieudolci/hatcher)
+[![Build Status](https://travis-ci.com/matthieudolci/hatcher.svg?branch=master)](https://travis-ci.com/matthieudolci/hatcher) [![Go Report Card](https://goreportcard.com/badge/github.com/matthieudolci/hatcher)](https://goreportcard.com/report/github.com/matthieudolci/hatcher)
 
 Hatcher is a slack bot written in go. It can:
 
