@@ -360,7 +360,7 @@ func (s *Slack) standupTodayRegister(response, timestamp, date, time, userid str
 func (s *Slack) standupBlocker(channelid, userid string) error {
 
 	attachment := slack.Attachment{
-		Text:       "Do you have any blocker?",
+		Text:       "Do you have any blockers?",
 		Color:      "#f91b1b",
 		CallbackID: "standupBlocker",
 	}
@@ -573,7 +573,7 @@ func (s *Slack) postStandupResults(userid, date string) error {
 		}
 
 		attachment := slack.Attachment{
-			Pretext:    fmt.Sprintf("%s posted a daily standup note", displayname),
+			Pretext:    fmt.Sprintf("*%s* posted a daily standup note", displayname),
 			Title:      "What did you do yesterday?",
 			Text:       fmt.Sprintf("%s", responseYesterday),
 			Color:      "#2896b7",
@@ -588,7 +588,7 @@ func (s *Slack) postStandupResults(userid, date string) error {
 		}
 
 		attachment3 := slack.Attachment{
-			Title:      "Do you have any blocker?",
+			Title:      "Do you have any blockers?",
 			Color:      "#f91b1b",
 			Text:       fmt.Sprintf("%s", responseBlocker),
 			CallbackID: fmt.Sprintf("resultsStandupBlocker_%s", userid),

@@ -34,10 +34,7 @@ Hatcher is a slack bot written in go. It can:
 
 ## How to use it:
 
-Your users will have to interact a first time with Hatcher by sending a DM to it with the following words:
--   `hello`
--   `hi`
--   `setup`
+Your users will have to interact a first time with Hatcher by either sending a DM saying `hello` or by saying `@hatcher hello`, `hello @hatcher` in any channels that hatcher belongs to.
 
 It will trigger few questions that need to be answered before the user can use the bot.
 

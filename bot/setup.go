@@ -13,57 +13,55 @@ import (
 // Ask the first question on the user init process
 // At this point the user can still cancel the stup
 func (s *Slack) askSetup(ev *slack.MessageEvent) error {
-	text := ev.Text
-	text = strings.TrimSpace(text)
-	text = strings.ToLower(text)
 
-	acceptedSetup := map[string]bool{
-		"hello": true,
-		"hi":    true,
-		"setup": true,
+	m := strings.Split(strings.TrimSpace(ev.Msg.Text), " ")[1:]
+	if len(m) == 0 || m[0] != "hello" {
+		n := strings.Split(strings.TrimSpace(ev.Msg.Text), " ")[:1]
+		if len(n) == 0 || n[0] != "hello" {
+			return fmt.Errorf("The message doesn't contain hello")
+		}
 	}
 
-	if acceptedSetup[text] {
-		params := slack.PostMessageParameters{}
-		attachment := slack.Attachment{
-			Text:       "Do you want to setup/update your user with the bot Hatcher?",
-			CallbackID: fmt.Sprintf("setup_%s", ev.User),
-			Color:      "#AED6F1",
-			Actions: []slack.AttachmentAction{
-				{
-					Name:  "SetupYes",
-					Text:  "Yes",
-					Type:  "button",
-					Value: "SetupYes",
-					Style: "primary",
-				},
-				{
-					Name:  "SetupNo",
-					Text:  "No",
-					Type:  "button",
-					Value: "SetupNo",
-					Style: "danger",
-				},
+	params := slack.PostMessageParameters{}
+	attachment := slack.Attachment{
+		Text:       "Do you want to setup/update your user with the bot Hatcher?",
+		CallbackID: fmt.Sprintf("setup_%s", ev.User),
+		Color:      "#AED6F1",
+		Actions: []slack.AttachmentAction{
+			{
+				Name:  "SetupYes",
+				Text:  "Yes",
+				Type:  "button",
+				Value: "SetupYes",
+				Style: "primary",
 			},
-		}
-		params.Attachments = []slack.Attachment{attachment}
-		params.User = ev.User
-		params.AsUser = true
-
-		_, err := s.Client.PostEphemeral(
-			ev.Channel,
-			ev.User,
-			slack.MsgOptionAttachments(params.Attachments...),
-			slack.MsgOptionPostMessageParameters(params),
-		)
-		if err != nil {
-			log.WithError(err).Error("Could not post askSetup question")
-		}
-		log.WithFields(log.Fields{
-			"userid":  ev.User,
-			"channel": ev.Channel,
-		}).Info("Message for askSetup posted")
+			{
+				Name:  "SetupNo",
+				Text:  "No",
+				Type:  "button",
+				Value: "SetupNo",
+				Style: "danger",
+			},
+		},
 	}
+	params.Attachments = []slack.Attachment{attachment}
+	params.User = ev.User
+	params.AsUser = true
+
+	_, err := s.Client.PostEphemeral(
+		ev.Channel,
+		ev.User,
+		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionPostMessageParameters(params),
+	)
+	if err != nil {
+		log.WithError(err).Error("Could not post askSetup question")
+	}
+	log.WithFields(log.Fields{
+		"userid":  ev.User,
+		"channel": ev.Channel,
+	}).Info("Message for askSetup posted")
+
 	return nil
 }
 
