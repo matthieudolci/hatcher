@@ -9,7 +9,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
-	uuid "github.com/satori/go.uuid"
 )
 
 func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
@@ -18,15 +17,17 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
 
-	uuid := s.createsUUID()
-	log.WithFields(log.Fields{
-		"uuid": uuid,
-	}).Info("Standup uuid generated")
-
 	acceptedStandup := map[string]bool{
 		"standup": true,
 	}
+
 	if acceptedStandup[text] {
+
+		uuid := s.createsUUID()
+		log.WithFields(log.Fields{
+			"uuid": uuid,
+		}).Info("Standup uuid generated")
+
 		attachment := slack.Attachment{
 			Text:       "What did you do yesterday?",
 			Color:      "#2896b7",
@@ -122,8 +123,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 
 func (s *Slack) standupYesterdayScheduled(userid string) error {
 
-	u := uuid.NewV4()
-	uuid := fmt.Sprint(u)
+	uuid := s.createsUUID()
 	log.WithFields(log.Fields{
 		"uuid": uuid,
 	}).Info("Standup uuid generated")
