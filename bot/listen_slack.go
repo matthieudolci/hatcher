@@ -64,6 +64,29 @@ func (s *Slack) run(ctx context.Context) {
 	log.Info("Now listening for incoming messages...")
 
 	for msg := range rtm.IncomingEvents {
+		switch x := msg.Data.(type) {
+		case *slack.MessageEvent:
+			if x.SubType == "message_changed" {
+				err := s.checkIfYesterdayMessageEdited(x)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"userid": x.User,
+					}).WithError(err).Error("Checking if yesterday standup was edited")
+				}
+				err = s.checkIfTodayMessageEdited(x)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"userid": x.User,
+					}).WithError(err).Error("Checking if yesterday standup was edited")
+				}
+				err = s.checkIfBlockerMessageEdited(x)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"userid": x.User,
+					}).WithError(err).Error("Checking if yesterday standup was edited")
+				}
+			}
+		}
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
 			if len(ev.User) == 0 {

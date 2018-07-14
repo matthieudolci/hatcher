@@ -35,16 +35,22 @@
   revision = "9349a22bb5eb7862fcc435828c2252641a1cba95"
 
 [[projects]]
+  branch = "master"
   name = "github.com/nlopes/slack"
   packages = ["."]
-  revision = "8ab4d0b364ef1e9af5d102531da20d5ec902b6c4"
-  version = "v0.2.0"
+  revision = "13510604f06044c100aab2c446b0c0a28e4e8c18"
 
 [[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
+
+[[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -59,11 +65,11 @@
     "unix",
     "windows"
   ]
-  revision = "3c6ecd8f22c6f40fbeec94c000a069d7d87c7624"
+  revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "46c9aaa4ef28dd9bbb387595901e817e61708fc8832c3d81bf3a344d08bf6a23"
+  inputs-digest = "9032023e1a2f62b9efe1faef2ce96a5ec5f90bfd166dffe837b563f1e9fd2fad"
   solver-name = "gps-cdcl"
   solver-version = 1

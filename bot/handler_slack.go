@@ -11,7 +11,7 @@ import (
 	"github.com/nlopes/slack"
 )
 
-// Listen on /slack for answer from the questions asked in bot_setup.go
+// Listen on /slack for answer from the questions asked in setup.go
 // and dispatch to the good functions
 func (s *Slack) slackPostHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 

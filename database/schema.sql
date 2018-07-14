@@ -40,6 +40,7 @@ CREATE TABLE hatcher.standupyesterday (
     date text,
     userid text,
     time text,
+    uuid text,
     id integer NOT NULL
 );
 
@@ -59,6 +60,7 @@ CREATE TABLE hatcher.standuptoday (
     date text,
     userid text,
     time text,
+    uuid text,
     id integer NOT NULL
 );
 
@@ -78,6 +80,7 @@ CREATE TABLE hatcher.standupblocker (
     date text,
     userid text,
     time text,
+    uuid text,
     id integer NOT NULL
 );
 
@@ -114,6 +117,24 @@ CREATE SEQUENCE hatcher.usersid_seq
 
 ALTER SEQUENCE hatcher.usersid_seq OWNED BY hatcher.users.id;
 
+CREATE TABLE hatcher.standupresults (
+    id integer NOT NULL,
+    date text,
+    time text,
+    uuid text,
+    timestamp text
+);
+
+CREATE SEQUENCE hatcher.standupresults_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE hatcher.standupresults_seq OWNED BY hatcher.standupresults.id;
+
 ALTER TABLE ONLY hatcher.happiness ALTER COLUMN id SET DEFAULT nextval('hatcher.happinessid_seq'::regclass);
 
 ALTER TABLE ONLY hatcher.users ALTER COLUMN id SET DEFAULT nextval('hatcher.usersid_seq'::regclass);
@@ -123,6 +144,8 @@ ALTER TABLE ONLY hatcher.standupyesterday ALTER COLUMN id SET DEFAULT nextval('h
 ALTER TABLE ONLY hatcher.standuptoday ALTER COLUMN id SET DEFAULT nextval('hatcher.standuptoday_seq'::regclass);
 
 ALTER TABLE ONLY hatcher.standupblocker ALTER COLUMN id SET DEFAULT nextval('hatcher.standupblocker_seq'::regclass);
+
+ALTER TABLE ONLY hatcher.standupresults ALTER COLUMN id SET DEFAULT nextval('hatcher.standupresults_seq'::regclass);
 
 ALTER TABLE ONLY hatcher.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (userid);
