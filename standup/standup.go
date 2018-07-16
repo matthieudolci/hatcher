@@ -1,4 +1,4 @@
-package bot
+package standup
 
 import (
 	"database/sql"
@@ -7,11 +7,12 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/matthieudolci/hatcher/common"
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
 )
 
-func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
+func AskStandupYesterday(s *common.Slack, ev *slack.MessageEvent) error {
 
 	text := ev.Text
 	text = strings.TrimSpace(text)
@@ -23,7 +24,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 
 	if acceptedStandup[text] {
 
-		uuid := s.createsUUID()
+		uuid := common.CreatesUUID()
 		log.WithFields(log.Fields{
 			"uuid": uuid,
 		}).Info("Standup uuid generated")
@@ -31,7 +32,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 		attachment := slack.Attachment{
 			Text:       "What did you do yesterday?",
 			Color:      "#2896b7",
-			CallbackID: fmt.Sprintf("standupYesterday_%s", ev.User),
+			CallbackID: fmt.Sprintf("Yesterday_%s", ev.User),
 		}
 
 		params := slack.PostMessageParameters{
@@ -46,7 +47,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 		log.WithFields(log.Fields{
 			"userid":    ev.User,
 			"timestamp": timestamp,
-		}).Info("Timestamp of the standupYesterday message")
+		}).Info("Timestamp of the Standup Yesterday message")
 
 		timer := time.NewTimer(10 * time.Minute)
 		ticker := time.NewTicker(5 * time.Second)
@@ -55,7 +56,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 		for {
 			select {
 			case <-timer.C:
-				s.standupCancelTimeout(ev.Channel)
+				err = postStandupCancelTimeout(s, ev.Channel)
 				if err != nil {
 					log.WithError(err).Error("Could not cancel standup")
 				}
@@ -92,7 +93,7 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 					stamp := history.Messages[0].Msg.Timestamp
 					switch text {
 					case "cancel":
-						s.standupCancel(ev.Channel)
+						err = postStandupCancel(s, ev.Channel)
 						if err != nil {
 							log.WithError(err).Error("Could not cancel standup")
 						}
@@ -100,17 +101,17 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 
 						break loop
 					default:
-						err = s.standupYesterdayRegister(text, stamp, date, time, userid, uuid)
+						err = YesterdayRegister(text, stamp, date, time, userid, uuid)
 						if err != nil {
-							log.WithError(err).Error("Could not start standupYesterdayRegister")
+							log.WithError(err).Error("Could not start YesterdayRegister")
 						}
 						log.Info("Starting standupYesterdayRegister")
 
-						err = s.standupToday(ev.Channel, ev.User, date, time, uuid)
+						err = askStandupToday(s, ev.Channel, ev.User, date, time, uuid)
 						if err != nil {
-							log.WithError(err).Error("Could not start standupToday")
+							log.WithError(err).Error("Could not start askStandupToday")
 						}
-						log.Info("Starting standupToday")
+						log.Info("Starting askStandupToday")
 
 						break loop
 					}
@@ -121,9 +122,9 @@ func (s *Slack) standupYesterday(ev *slack.MessageEvent) error {
 	return nil
 }
 
-func (s *Slack) standupYesterdayScheduled(userid string) error {
+func AskStandupYesterdayScheduled(s *common.Slack, userid string) error {
 
-	uuid := s.createsUUID()
+	uuid := common.CreatesUUID()
 	log.WithFields(log.Fields{
 		"uuid": uuid,
 	}).Info("Standup uuid generated")
@@ -156,7 +157,7 @@ loop:
 	for {
 		select {
 		case <-timer.C:
-			s.standupCancelTimeout(channelid)
+			err = postStandupCancelTimeout(s, channelid)
 			if err != nil {
 				log.WithError(err).Error("Could not cancel standup")
 			}
@@ -194,7 +195,7 @@ loop:
 				stamp := history.Messages[0].Msg.Timestamp
 				switch text {
 				case "cancel":
-					s.standupCancel(channelid)
+					err = postStandupCancel(s, channelid)
 					if err != nil {
 						log.WithError(err).Error("Could not cancel standup")
 					}
@@ -202,17 +203,17 @@ loop:
 
 					break loop
 				default:
-					err = s.standupYesterdayRegister(text, stamp, date, time, userid, uuid)
+					err = YesterdayRegister(text, stamp, date, time, userid, uuid)
 					if err != nil {
-						log.WithError(err).Error("Could not start standupYesterdayRegister")
+						log.WithError(err).Error("Could not start YesterdayRegister")
 					}
-					log.Info("Starting standupYesterdayRegister")
+					log.Info("Starting YesterdayRegister")
 
-					err = s.standupToday(channelid, userid, date, time, uuid)
+					err = askStandupToday(s, channelid, userid, date, time, uuid)
 					if err != nil {
-						log.WithError(err).Error("Could not start standupToday")
+						log.WithError(err).Error("Could not start askStandupToday")
 					}
-					log.Info("Starting standupToday")
+					log.Info("Starting askStandupToday")
 					break loop
 				}
 			}
@@ -221,7 +222,7 @@ loop:
 	return nil
 }
 
-func (s *Slack) standupYesterdayRegister(response, timestamp, date, time, userid, uuid string) error {
+func YesterdayRegister(response, timestamp, date, time, userid, uuid string) error {
 
 	log.Info("Starting import in database of standupYesterday result")
 
@@ -244,13 +245,13 @@ func (s *Slack) standupYesterdayRegister(response, timestamp, date, time, userid
 		userid,
 		uuid).Scan(&id)
 	if err != nil {
-		log.WithError(err).Error("Couldn't insert in the database the result of standupYesterday")
+		log.WithError(err).Error("Couldn't insert in the database the result of AskStandupYesterday")
 	}
-	log.Info("standupYesterday result written in database")
+	log.Info("AskStandupYesterday result written in database")
 	return nil
 }
 
-func (s *Slack) standupToday(channelid, userid, date, times, uuid string) error {
+func askStandupToday(s *common.Slack, channelid, userid, date, times, uuid string) error {
 
 	attachment := slack.Attachment{
 		Text:       "What are you doing today?",
@@ -276,7 +277,7 @@ loop:
 	for {
 		select {
 		case <-timer.C:
-			s.standupCancelTimeout(channelid)
+			err = postStandupCancelTimeout(s, channelid)
 			if err != nil {
 				log.WithError(err).Error("Could not cancel standup")
 			}
@@ -309,7 +310,7 @@ loop:
 				stamp := history.Messages[0].Msg.Timestamp
 				switch text {
 				case "cancel":
-					s.standupCancel(channelid)
+					err = postStandupCancel(s, channelid)
 					if err != nil {
 						log.WithError(err).Error("Could not cancel standup")
 					}
@@ -317,17 +318,17 @@ loop:
 
 					break loop
 				default:
-					err := s.standupTodayRegister(text, stamp, date, times, userid, uuid)
+					err := TodayRegister(text, stamp, date, times, userid, uuid)
 					if err != nil {
-						log.WithError(err).Error("Could not start standupTodayRegister")
+						log.WithError(err).Error("Could not start TodayRegister")
 					}
-					log.Info("Starting standupTodayRegister")
+					log.Info("Starting TodayRegister")
 
-					err = s.standupBlocker(channelid, userid, date, times, uuid)
+					err = askStandupBlocker(s, channelid, userid, date, times, uuid)
 					if err != nil {
-						log.WithError(err).Error("Could not start standupBlocker")
+						log.WithError(err).Error("Could not start askStandupBlocker")
 					}
-					log.Info("Started standupBlocker")
+					log.Info("Started askStandupBlocker")
 
 					break loop
 				}
@@ -337,9 +338,9 @@ loop:
 	return nil
 }
 
-func (s *Slack) standupTodayRegister(response, timestamp, date, time, userid, uuid string) error {
+func TodayRegister(response, timestamp, date, time, userid, uuid string) error {
 
-	log.Info("Starting import in database of standupToday result")
+	log.Info("Starting import in database of AskStandupToday result")
 
 	var id string
 
@@ -360,14 +361,14 @@ func (s *Slack) standupTodayRegister(response, timestamp, date, time, userid, uu
 		userid,
 		uuid).Scan(&id)
 	if err != nil {
-		log.WithError(err).Error("Couldn't insert in the database the result of standupToday")
+		log.WithError(err).Error("Couldn't insert in the database the result of AskStandupToday")
 	}
-	log.Info("standupToday result written in database")
+	log.Info("AskStandupToday result written in database")
 
 	return nil
 }
 
-func (s *Slack) standupBlocker(channelid, userid, date, times, uuid string) error {
+func askStandupBlocker(s *common.Slack, channelid, userid, date, times, uuid string) error {
 
 	attachment := slack.Attachment{
 		Text:       "Do you have any blockers?",
@@ -393,7 +394,7 @@ loop:
 	for {
 		select {
 		case <-timer.C:
-			s.standupCancelTimeout(channelid)
+			err = postStandupCancelTimeout(s, channelid)
 			if err != nil {
 				log.WithError(err).Error("Could not cancel standup")
 			}
@@ -426,7 +427,7 @@ loop:
 				stamp := history.Messages[0].Msg.Timestamp
 				switch text {
 				case "cancel":
-					err := s.standupCancel(channelid)
+					err := postStandupCancel(s, channelid)
 					if err != nil {
 						log.WithError(err).Error("Could not cancel standup")
 					}
@@ -434,17 +435,17 @@ loop:
 
 					break loop
 				default:
-					err := s.standupBlockerRegister(text, stamp, date, times, userid, uuid)
+					err := BlockerRegister(text, stamp, date, times, userid, uuid)
 					if err != nil {
-						log.WithError(err).Error("Could not start standupBlockerRegister")
+						log.WithError(err).Error("Could not start BlockerRegister")
 					}
-					log.Info("Started standupBlockerRegister")
+					log.Info("Started BlockerRegister")
 
-					err = s.standupDone(channelid, userid, date, times, uuid)
+					err = postStandupDone(s, channelid, userid, date, times, uuid)
 					if err != nil {
-						log.WithError(err).Error("Could not start standupDone")
+						log.WithError(err).Error("Could not start postStandupDone")
 					}
-					log.Info("Started standupDone")
+					log.Info("Started postStandupDone")
 
 					break loop
 				}
@@ -454,9 +455,9 @@ loop:
 	return nil
 }
 
-func (s *Slack) standupBlockerRegister(response, timestamp, date, time, userid, uuid string) error {
+func BlockerRegister(response, timestamp, date, time, userid, uuid string) error {
 
-	log.Info("Starting import in database of standupBlocker result")
+	log.Info("Starting import in database of AskStandupBlocker result")
 
 	var id string
 
@@ -477,14 +478,14 @@ func (s *Slack) standupBlockerRegister(response, timestamp, date, time, userid, 
 		userid,
 		uuid).Scan(&id)
 	if err != nil {
-		log.WithError(err).Error("Couldn't insert in the database the result of standupBlocker")
+		log.WithError(err).Error("Couldn't insert in the database the result of AskStandupBlocker")
 	}
-	log.Info("standupBlocker result written in database")
+	log.Info("AskStandupBlocker result written in database")
 
 	return nil
 }
 
-func (s *Slack) standupCancel(channelid string) error {
+func postStandupCancel(s *common.Slack, channelid string) error {
 
 	attachment := slack.Attachment{
 		Text:       "Standup canceled!",
@@ -506,7 +507,7 @@ func (s *Slack) standupCancel(channelid string) error {
 	return nil
 }
 
-func (s *Slack) standupCancelTimeout(channelid string) error {
+func postStandupCancelTimeout(s *common.Slack, channelid string) error {
 
 	attachment := slack.Attachment{
 		Text:       "The standup was canceled for timeout.\nYou can restart your standup by sending `standup`",
@@ -528,7 +529,7 @@ func (s *Slack) standupCancelTimeout(channelid string) error {
 	return nil
 }
 
-func (s *Slack) standupDone(channelid, userid, date, time, uuid string) error {
+func postStandupDone(s *common.Slack, channelid, userid, date, time, uuid string) error {
 
 	attachment := slack.Attachment{
 		Text:       "Standup Done! Thanks and see you tomorrow :smiley:",
@@ -547,16 +548,16 @@ func (s *Slack) standupDone(channelid, userid, date, time, uuid string) error {
 	}
 	log.Info("Posted standup done message")
 
-	err = s.postStandupResults(userid, date, time, uuid)
+	err = postStandupResults(s, userid, date, time, uuid)
 	if err != nil {
-		log.WithError(err).Error("Could not start postStandup")
+		log.WithError(err).Error("Could not start postStandupResults")
 	}
-	log.Info("Started postStandup")
+	log.Info("Started postStandupResults")
 
 	return nil
 }
 
-func (s *Slack) postStandupResults(userid, date, time, uuid string) error {
+func postStandupResults(s *common.Slack, userid, date, time, uuid string) error {
 
 	rows, err := database.DB.Query("SELECT userid, displayname, standup_channel FROM hatcher.users WHERE userid = $1;", userid)
 	if err != nil {
@@ -570,9 +571,9 @@ func (s *Slack) postStandupResults(userid, date, time, uuid string) error {
 		var displayname string
 		var standupChannel string
 
-		responseYesterday := s.standupResultsYesterday(userid, date, standupChannel)
-		responseToday := s.standupResultsToday(userid, date, standupChannel)
-		responseBlocker := s.standupResultsBlocker(userid, date, standupChannel)
+		responseYesterday := getResultsYesterday(userid, date, standupChannel)
+		responseToday := getResultsToday(userid, date, standupChannel)
+		responseBlocker := getResultsBlocker(userid, date, standupChannel)
 
 		err = rows.Scan(&userid, &displayname, &standupChannel)
 		if err != nil {
@@ -620,7 +621,7 @@ func (s *Slack) postStandupResults(userid, date, time, uuid string) error {
 			"timestamp": respTimestamp,
 		}).Info("Standup results posted")
 
-		err = s.queryRow("INSERT INTO hatcher.standupresults (timestamp, date, time, uuid) VALUES ($1, $2, $3, $4)", respTimestamp, date, time, uuid)
+		err = common.QueryRow("INSERT INTO hatcher.standupresults (timestamp, date, time, uuid) VALUES ($1, $2, $3, $4)", respTimestamp, date, time, uuid)
 		if err != nil {
 			log.WithError(err).Error("Could not edit the standup result timestamp row")
 		}
@@ -632,7 +633,7 @@ func (s *Slack) postStandupResults(userid, date, time, uuid string) error {
 	return nil
 }
 
-func (s *Slack) standupResultsYesterday(userid, date, standupChannel string) (responseYesterday string) {
+func getResultsYesterday(userid, date, standupChannel string) (responseYesterday string) {
 
 	var response string
 
@@ -652,7 +653,7 @@ func (s *Slack) standupResultsYesterday(userid, date, standupChannel string) (re
 	return response
 }
 
-func (s *Slack) standupResultsToday(userid, date, standupChannel string) (responseToday string) {
+func getResultsToday(userid, date, standupChannel string) (responseToday string) {
 
 	var response string
 
@@ -672,7 +673,7 @@ func (s *Slack) standupResultsToday(userid, date, standupChannel string) (respon
 	return response
 }
 
-func (s *Slack) standupResultsBlocker(userid, date, standupChannel string) (responseBlocker string) {
+func getResultsBlocker(userid, date, standupChannel string) (responseBlocker string) {
 
 	var response string
 
@@ -693,14 +694,14 @@ func (s *Slack) standupResultsBlocker(userid, date, standupChannel string) (resp
 	return response
 }
 
-func (s *Slack) checkIfYesterdayMessageEdited(ev *slack.MessageEvent) error {
+func CheckIfYesterdayMessageEdited(s *common.Slack, ev *slack.MessageEvent) error {
 
 	timestamp := ev.SubMessage.Timestamp
 	text := ev.SubMessage.Text
 	userid := ev.SubMessage.User
 
-	if s.rowExists("SELECT exists (SELECT timestamp FROM hatcher.standupyesterday WHERE timestamp=$1)", timestamp) {
-		err := s.queryRow("UPDATE hatcher.standupyesterday SET response=$2 WHERE timestamp=$1", timestamp, text)
+	if common.RowExists("SELECT exists (SELECT timestamp FROM hatcher.standupyesterday WHERE timestamp=$1)", timestamp) {
+		err := common.QueryRow("UPDATE hatcher.standupyesterday SET response=$2 WHERE timestamp=$1", timestamp, text)
 		if err != nil {
 			log.WithError(err).Error("Could not edit the yesterday standup row")
 		}
@@ -710,7 +711,7 @@ func (s *Slack) checkIfYesterdayMessageEdited(ev *slack.MessageEvent) error {
 
 		var standupUUID string
 
-		standupUUID, err = s.queryUUID("SELECT uuid FROM hatcher.standupyesterday WHERE timestamp=$1", timestamp)
+		standupUUID, err = common.QueryUUID("SELECT uuid FROM hatcher.standupyesterday WHERE timestamp=$1", timestamp)
 		if err != nil {
 			log.WithError(err).Error("Could get the standup uuid")
 		}
@@ -719,7 +720,7 @@ func (s *Slack) checkIfYesterdayMessageEdited(ev *slack.MessageEvent) error {
 			"timestamp": timestamp,
 		}).Info("The standup uuid was retrieve")
 
-		err = s.updateStandupResults(userid, standupUUID)
+		err = updateStandupResults(s, userid, standupUUID)
 		if err != nil {
 			log.WithError(err).Error("Could not start the standup update for yesterday notes")
 		}
@@ -730,14 +731,14 @@ func (s *Slack) checkIfYesterdayMessageEdited(ev *slack.MessageEvent) error {
 	return nil
 }
 
-func (s *Slack) checkIfTodayMessageEdited(ev *slack.MessageEvent) error {
+func CheckIfTodayMessageEdited(s *common.Slack, ev *slack.MessageEvent) error {
 
 	timestamp := ev.SubMessage.Timestamp
 	text := ev.SubMessage.Text
 	userid := ev.SubMessage.User
 
-	if s.rowExists("SELECT exists (SELECT timestamp FROM hatcher.standuptoday WHERE timestamp=$1)", timestamp) {
-		err := s.queryRow("UPDATE hatcher.standuptoday SET response=$2 WHERE timestamp=$1", timestamp, text)
+	if common.RowExists("SELECT exists (SELECT timestamp FROM hatcher.standuptoday WHERE timestamp=$1)", timestamp) {
+		err := common.QueryRow("UPDATE hatcher.standuptoday SET response=$2 WHERE timestamp=$1", timestamp, text)
 		if err != nil {
 			log.WithError(err).Error("Could not edit the today standup row")
 		}
@@ -747,7 +748,7 @@ func (s *Slack) checkIfTodayMessageEdited(ev *slack.MessageEvent) error {
 
 		var standupUUID string
 
-		standupUUID, err = s.queryUUID("SELECT uuid FROM hatcher.standuptoday WHERE timestamp=$1", timestamp)
+		standupUUID, err = common.QueryUUID("SELECT uuid FROM hatcher.standuptoday WHERE timestamp=$1", timestamp)
 		if err != nil {
 			log.WithError(err).Error("Could get the standup uuid")
 		}
@@ -756,7 +757,7 @@ func (s *Slack) checkIfTodayMessageEdited(ev *slack.MessageEvent) error {
 			"timestamp": timestamp,
 		}).Info("The standup uuid was retrieve")
 
-		err = s.updateStandupResults(userid, standupUUID)
+		err = updateStandupResults(s, userid, standupUUID)
 		if err != nil {
 			log.WithError(err).Error("Could not start the standup update for Today notes")
 		}
@@ -767,14 +768,14 @@ func (s *Slack) checkIfTodayMessageEdited(ev *slack.MessageEvent) error {
 	return nil
 }
 
-func (s *Slack) checkIfBlockerMessageEdited(ev *slack.MessageEvent) error {
+func CheckIfBlockerMessageEdited(s *common.Slack, ev *slack.MessageEvent) error {
 
 	timestamp := ev.SubMessage.Timestamp
 	text := ev.SubMessage.Text
 	userid := ev.SubMessage.User
 
-	if s.rowExists("SELECT exists (SELECT timestamp FROM hatcher.standupblocker WHERE timestamp=$1)", timestamp) {
-		err := s.queryRow("UPDATE hatcher.standupblocker SET response=$2 WHERE timestamp=$1", timestamp, text)
+	if common.RowExists("SELECT exists (SELECT timestamp FROM hatcher.standupblocker WHERE timestamp=$1)", timestamp) {
+		err := common.QueryRow("UPDATE hatcher.standupblocker SET response=$2 WHERE timestamp=$1", timestamp, text)
 		if err != nil {
 			log.WithError(err).Error("Could not edit the blocker standup row")
 		}
@@ -784,7 +785,7 @@ func (s *Slack) checkIfBlockerMessageEdited(ev *slack.MessageEvent) error {
 
 		var standupUUID string
 
-		standupUUID, err = s.queryUUID("SELECT uuid FROM hatcher.standupblocker WHERE timestamp=$1", timestamp)
+		standupUUID, err = common.QueryUUID("SELECT uuid FROM hatcher.standupblocker WHERE timestamp=$1", timestamp)
 		if err != nil {
 			log.WithError(err).Error("Could get the standup uuid")
 		}
@@ -793,7 +794,7 @@ func (s *Slack) checkIfBlockerMessageEdited(ev *slack.MessageEvent) error {
 			"timestamp": timestamp,
 		}).Info("The standup uuid was retrieve")
 
-		err = s.updateStandupResults(userid, standupUUID)
+		err = updateStandupResults(s, userid, standupUUID)
 		if err != nil {
 			log.WithError(err).Error("Could not start the standup update for blocker")
 		}
@@ -804,7 +805,7 @@ func (s *Slack) checkIfBlockerMessageEdited(ev *slack.MessageEvent) error {
 	return nil
 }
 
-func (s *Slack) updateStandupResults(userid, uuid string) error {
+func updateStandupResults(s *common.Slack, userid, uuid string) error {
 
 	rows, err := database.DB.Query("SELECT userid, displayname, standup_channel FROM hatcher.users WHERE userid = $1;", userid)
 	if err != nil {
@@ -826,9 +827,9 @@ func (s *Slack) updateStandupResults(userid, uuid string) error {
 			log.WithError(err).Error("Impossible to get the standup result uuid")
 		}
 
-		responseYesterday := s.standupResultsYesterday(userid, date, standupChannel)
-		responseToday := s.standupResultsToday(userid, date, standupChannel)
-		responseBlocker := s.standupResultsBlocker(userid, date, standupChannel)
+		responseYesterday := getResultsYesterday(userid, date, standupChannel)
+		responseToday := getResultsToday(userid, date, standupChannel)
+		responseBlocker := getResultsBlocker(userid, date, standupChannel)
 
 		err = rows.Scan(&userid, &displayname, &standupChannel)
 		if err != nil {

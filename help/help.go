@@ -1,14 +1,15 @@
-package bot
+package help
 
 import (
 	"fmt"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/matthieudolci/hatcher/common"
 	"github.com/nlopes/slack"
 )
 
-func (s *Slack) askHelp(ev *slack.MessageEvent) error {
+func AskHelp(s *common.Slack, ev *slack.MessageEvent) error {
 
 	m := strings.Split(strings.TrimSpace(ev.Msg.Text), " ")[1:]
 	if len(m) == 0 || m[0] != "help" {

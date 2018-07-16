@@ -1,4 +1,4 @@
-package bot
+package common
 
 import (
 	"database/sql"
@@ -6,10 +6,23 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/hatcher/database"
+	"github.com/nlopes/slack"
 	uuid "github.com/satori/go.uuid"
 )
 
-func (s *Slack) rowExists(query string, args ...interface{}) bool {
+// Slack is the primary struct for our slackbot
+type Slack struct {
+	Name  string
+	Token string
+
+	User   string
+	UserID string
+
+	Client       *slack.Client
+	MessageEvent *slack.MessageEvent
+}
+
+func RowExists(query string, args ...interface{}) bool {
 
 	var exists bool
 
@@ -22,7 +35,7 @@ func (s *Slack) rowExists(query string, args ...interface{}) bool {
 	return exists
 }
 
-func (s *Slack) queryRow(query string, args ...interface{}) error {
+func QueryRow(query string, args ...interface{}) error {
 
 	var id int
 
@@ -35,7 +48,7 @@ func (s *Slack) queryRow(query string, args ...interface{}) error {
 	return nil
 }
 
-func (s *Slack) queryUUID(query string, args ...interface{}) (string, error) {
+func QueryUUID(query string, args ...interface{}) (string, error) {
 
 	var uuid string
 
@@ -51,7 +64,7 @@ func (s *Slack) queryUUID(query string, args ...interface{}) (string, error) {
 	return u, err
 }
 
-func (s *Slack) createsUUID() string {
+func CreatesUUID() string {
 	u := uuid.NewV4()
 	uuid := fmt.Sprint(u)
 	return uuid

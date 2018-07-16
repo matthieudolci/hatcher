@@ -1,19 +1,23 @@
-package bot
+package scheduler
 
 import (
 	"database/sql"
 	"time"
 
+	"github.com/matthieudolci/hatcher/common"
+	"github.com/matthieudolci/hatcher/standup"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/gocron"
 	"github.com/matthieudolci/hatcher/database"
+	"github.com/matthieudolci/hatcher/happiness"
 )
 
 var scheduler *gocron.Scheduler
 var stop chan bool
 
 // GetTimeAndUsersForScheduler gets the time selected by a user for the Happiness survey and standup
-func (s *Slack) GetTimeAndUsersForScheduler() error {
+func GetTimeAndUsersForScheduler(s *common.Slack) error {
 	type ScheduleData struct {
 		TimesHappiness sql.NullString
 		TimesStandup   sql.NullString
@@ -40,7 +44,7 @@ func (s *Slack) GetTimeAndUsersForScheduler() error {
 		}
 
 		if scheduledata.TimesHappiness.Valid {
-			err := s.runSchedulerHappiness(scheduledata.TimesHappiness.String, scheduledata.UserID)
+			err := runSchedulerHappiness(s, scheduledata.TimesHappiness.String, scheduledata.UserID)
 			if err != nil {
 				log.WithError(err).Error("Running runSchedulerHappiness failed")
 			}
@@ -49,7 +53,7 @@ func (s *Slack) GetTimeAndUsersForScheduler() error {
 		}
 
 		if scheduledata.TimesStandup.Valid {
-			err := s.runSchedulerStandup(scheduledata.TimesStandup.String, scheduledata.UserID)
+			err := runSchedulerStandup(s, scheduledata.TimesStandup.String, scheduledata.UserID)
 			if err != nil {
 				log.WithError(err).Error("Running runSchedulerStandup failed")
 			}
@@ -68,7 +72,7 @@ func (s *Slack) GetTimeAndUsersForScheduler() error {
 }
 
 // Runs the jobs askHappinessSurveyScheduled at a times defined by the user
-func (s *Slack) runSchedulerHappiness(timeHappiness, userid string) error {
+func runSchedulerHappiness(s *common.Slack, timeHappiness, userid string) error {
 
 	location, err := time.LoadLocation("America/Vancouver")
 	if err != nil {
@@ -78,11 +82,11 @@ func (s *Slack) runSchedulerHappiness(timeHappiness, userid string) error {
 		gocron.ChangeLoc(location)
 	}
 
-	scheduler.Every(1).Monday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
-	scheduler.Every(1).Tuesday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
-	scheduler.Every(1).Wednesday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
-	scheduler.Every(1).Thursday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
-	scheduler.Every(1).Friday().At(timeHappiness).Do(s.askHappinessSurveyScheduled, userid)
+	scheduler.Every(1).Monday().At(timeHappiness).Do(happiness.AskHappinessSurveyScheduled, s, userid)
+	scheduler.Every(1).Tuesday().At(timeHappiness).Do(happiness.AskHappinessSurveyScheduled, s, userid)
+	scheduler.Every(1).Wednesday().At(timeHappiness).Do(happiness.AskHappinessSurveyScheduled, s, userid)
+	scheduler.Every(1).Thursday().At(timeHappiness).Do(happiness.AskHappinessSurveyScheduled, s, userid)
+	scheduler.Every(1).Friday().At(timeHappiness).Do(happiness.AskHappinessSurveyScheduled, s, userid)
 	log.WithFields(log.Fields{
 		"userid": userid,
 	}).Info("Happiness Survey schedule tasks posted")
@@ -91,7 +95,7 @@ func (s *Slack) runSchedulerHappiness(timeHappiness, userid string) error {
 }
 
 // Runs the jobs standupYesterdayScheduled at a times defined by the user
-func (s *Slack) runSchedulerStandup(timeStandup, userid string) error {
+func runSchedulerStandup(s *common.Slack, timeStandup, userid string) error {
 
 	location, err := time.LoadLocation("America/Vancouver")
 	if err != nil {
@@ -101,11 +105,11 @@ func (s *Slack) runSchedulerStandup(timeStandup, userid string) error {
 		gocron.ChangeLoc(location)
 	}
 
-	scheduler.Every(1).Monday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
-	scheduler.Every(1).Tuesday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
-	scheduler.Every(1).Wednesday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
-	scheduler.Every(1).Thursday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
-	scheduler.Every(1).Friday().At(timeStandup).Do(s.standupYesterdayScheduled, userid)
+	scheduler.Every(1).Monday().At(timeStandup).Do(standup.AskStandupYesterdayScheduled, s, userid)
+	scheduler.Every(1).Tuesday().At(timeStandup).Do(standup.AskStandupYesterdayScheduled, s, userid)
+	scheduler.Every(1).Wednesday().At(timeStandup).Do(standup.AskStandupYesterdayScheduled, s, userid)
+	scheduler.Every(1).Thursday().At(timeStandup).Do(standup.AskStandupYesterdayScheduled, s, userid)
+	scheduler.Every(1).Friday().At(timeStandup).Do(standup.AskStandupYesterdayScheduled, s, userid)
 	log.WithFields(log.Fields{
 		"userid": userid,
 	}).Info("Standup schedule tasks posted")

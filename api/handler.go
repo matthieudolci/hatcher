@@ -1,18 +1,21 @@
-package bot
+package api
 
 import (
 	"net/http"
 
+	"github.com/matthieudolci/hatcher/common"
+
 	"github.com/julienschmidt/httprouter"
+	"github.com/matthieudolci/hatcher/bot"
 )
 
-// APIHandler instantiaties the web handler for listening on the API
-func (s *Slack) APIHandler() (http.Handler, error) {
+// Handler instantiaties the web handler for listening on the API
+func Handler(s *common.Slack) (http.Handler, error) {
 
 	router := httprouter.New()
 
 	// main API endpoint with slack
-	router.POST("/slack", s.slackPostHandler)
+	router.POST("/slack", bot.SlackPostHandler(s))
 
 	// API endpoints to get data from the happiness survey
 	router.GET("/api/happiness/userdate/:userid/:date", surveyResultsUserDayHandler)

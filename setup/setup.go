@@ -1,4 +1,4 @@
-package bot
+package setup
 
 import (
 	"database/sql"
@@ -6,13 +6,14 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/matthieudolci/hatcher/common"
 	"github.com/matthieudolci/hatcher/database"
 	"github.com/nlopes/slack"
 )
 
 // Ask the first question on the user init process
 // At this point the user can still cancel the stup
-func (s *Slack) askSetup(ev *slack.MessageEvent) error {
+func AskSetup(s *common.Slack, ev *slack.MessageEvent) error {
 
 	m := strings.Split(strings.TrimSpace(ev.Msg.Text), " ")[1:]
 	if len(m) == 0 || m[0] != "hello" {
@@ -65,10 +66,10 @@ func (s *Slack) askSetup(ev *slack.MessageEvent) error {
 	return nil
 }
 
-// initBot is the first step of using this bot.
+// InitBot is the first step of using this bot.
 // It will insert the user informations inside the database allowing us
 // to use them
-func (s *Slack) initBot(userid, email, fullname, displayname string) error {
+func InitBot(userid, email, fullname, displayname string) error {
 
 	var id string
 
@@ -116,9 +117,9 @@ func (s *Slack) initBot(userid, email, fullname, displayname string) error {
 	return nil
 }
 
-// Ask if we want to remove our user from the bot
+// AskRemove Asks if we want to remove our user from the bot
 // This will delete the user from the datatbase
-func (s *Slack) askRemove(ev *slack.MessageEvent) error {
+func AskRemove(s *common.Slack, ev *slack.MessageEvent) error {
 	text := ev.Text
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
@@ -175,8 +176,8 @@ func (s *Slack) askRemove(ev *slack.MessageEvent) error {
 	return nil
 }
 
-// removeBot remove the user from the bot/database
-func (s *Slack) removeBot(userid, fullname string) error {
+// RemoveBot remove the user from the bot/database
+func RemoveBot(userid, fullname string) error {
 
 	sqlDelete := `
 		DELETE FROM hatcher.users
@@ -196,8 +197,8 @@ func (s *Slack) removeBot(userid, fullname string) error {
 	return nil
 }
 
-// Ask if we want to remove our user from the happiness survey
-func (s *Slack) askRemoveHappiness(ev *slack.MessageEvent) error {
+//AskRemoveHappiness Asks if we want to remove our user from the happiness survey
+func AskRemoveHappiness(s *common.Slack, ev *slack.MessageEvent) error {
 	text := ev.Text
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
@@ -253,8 +254,8 @@ func (s *Slack) askRemoveHappiness(ev *slack.MessageEvent) error {
 	return nil
 }
 
-// removeBot remove the user from the bot/database
-func (s *Slack) removeHappiness(userid, fullname string) error {
+// RemoveHappiness remove the user from the bot/database
+func RemoveHappiness(userid, fullname string) error {
 
 	sqlDelete := `
 		UPDATE hatcher.users
@@ -275,8 +276,8 @@ func (s *Slack) removeHappiness(userid, fullname string) error {
 	return nil
 }
 
-// Ask who is the user manager
-func (s *Slack) askWhoIsManager(channelid, userid string) error {
+// AskWhoIsManager Ask who is the user manager
+func AskWhoIsManager(s *common.Slack, channelid, userid string) error {
 
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
@@ -322,8 +323,8 @@ func (s *Slack) askWhoIsManager(channelid, userid string) error {
 	return nil
 }
 
-// Add the person select previously in askWhoIsManager to the user profile
-func (s *Slack) initManager(userid, fullname, managerid, managername string) error {
+// InitManager Add the person select previously in askWhoIsManager to the user profile
+func InitManager(userid, fullname, managerid, managername string) error {
 
 	sqlUpdate := `
 		UPDATE hatcher.users
@@ -346,8 +347,8 @@ func (s *Slack) initManager(userid, fullname, managerid, managername string) err
 	return nil
 }
 
-// Ask if the user if a manager
-func (s *Slack) askIfManager(channelid, userid string) error {
+// AskIfManager Asks if the user if a manager
+func AskIfManager(s *common.Slack, channelid, userid string) error {
 
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
@@ -394,8 +395,8 @@ func (s *Slack) askIfManager(channelid, userid string) error {
 	return nil
 }
 
-// Setup the user as a manager or not in the database
-func (s *Slack) setupIsManager(userid, fullname, ismanager string) error {
+// IsManager Setups the user as a manager or not in the database
+func IsManager(userid, fullname, ismanager string) error {
 
 	sqlUpdate := `
 		UPDATE hatcher.users
@@ -423,97 +424,8 @@ func (s *Slack) setupIsManager(userid, fullname, ismanager string) error {
 	return nil
 }
 
-// Ask what time the happiness survey should be send
-func (s *Slack) askTimeHappinessSurvey(channelid, userid string) error {
-
-	params := slack.PostMessageParameters{}
-	attachment := slack.Attachment{
-		Text:       "What time do you want the happiness survey to happen?",
-		CallbackID: fmt.Sprintf("happTime_%s", userid),
-		Color:      "#AED6F1",
-		Actions: []slack.AttachmentAction{
-			{
-				Name: "HappinessTime",
-				Type: "select",
-				Options: []slack.AttachmentActionOption{
-					{
-						Text:  "09:00",
-						Value: "09:00",
-					},
-					{
-						Text:  "09:15",
-						Value: "09:15",
-					},
-					{
-						Text:  "09:30",
-						Value: "09:30",
-					},
-					{
-						Text:  "09:45",
-						Value: "09:45",
-					},
-					{
-						Text:  "10:00",
-						Value: "10:00",
-					},
-					{
-						Text:  "10:15",
-						Value: "10:15",
-					},
-					{
-						Text:  "10:30",
-						Value: "10:30",
-					},
-					{
-						Text:  "10:45",
-						Value: "10:45",
-					},
-					{
-						Text:  "11:00",
-						Value: "11:00",
-					},
-					{
-						Text:  "11:15",
-						Value: "11:15",
-					},
-					{
-						Text:  "11:30",
-						Value: "11:30",
-					},
-					{
-						Text:  "11:45",
-						Value: "11:45",
-					},
-				},
-			},
-		},
-	}
-	params.Attachments = []slack.Attachment{attachment}
-	params.User = userid
-	params.AsUser = true
-
-	_, err := s.Client.PostEphemeral(
-		channelid,
-		userid,
-		slack.MsgOptionAttachments(params.Attachments...),
-		slack.MsgOptionPostMessageParameters(params),
-	)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"userid":  userid,
-			"channel": channelid,
-		}).WithError(err).Error("Could not post message askTimeHappinessSurvey")
-	}
-	log.WithFields(log.Fields{
-		"userid":  userid,
-		"channel": channelid,
-	}).Info("Message askTimeHappinessSurvey posted")
-	return nil
-}
-
-// Ask what time the happiness survey should be send
-//
-func (s *Slack) askSetupTimeHappinessSurvey(ev *slack.MessageEvent) error {
+// AskSetupTimeHappinessSurvey Ask what time the happiness survey should be send
+func AskSetupTimeHappinessSurvey(s *common.Slack, ev *slack.MessageEvent) error {
 	text := ev.Text
 	text = strings.TrimSpace(text)
 	text = strings.ToLower(text)
@@ -609,8 +521,8 @@ func (s *Slack) askSetupTimeHappinessSurvey(ev *slack.MessageEvent) error {
 	return nil
 }
 
-// Insert in the database the result of askTimeHappinessSurvey
-func (s *Slack) insertTimeHappinessSurvey(userid, fullname, time string) error {
+// InsertTimeHappinessSurvey Inserts in the database the result of askTimeHappinessSurvey
+func InsertTimeHappinessSurvey(userid, fullname, time string) error {
 
 	sqlUpdate := `
 		UPDATE hatcher.users
@@ -631,8 +543,8 @@ func (s *Slack) insertTimeHappinessSurvey(userid, fullname, time string) error {
 	return nil
 }
 
-// Ask what time the standup should happen
-func (s *Slack) askTimeStandup(channelid, userid string) error {
+// AskTimeStandup Asks what time the standup should happen
+func AskTimeStandup(s *common.Slack, channelid, userid string) error {
 
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
@@ -703,8 +615,8 @@ func (s *Slack) askTimeStandup(channelid, userid string) error {
 	return nil
 }
 
-// Insert in the database the result of askTimeStandup
-func (s *Slack) insertTimeStandup(userid, fullname, time string) error {
+// InsertTimeStandup Insert in the database the result of askTimeStandup
+func InsertTimeStandup(userid, fullname, time string) error {
 
 	sqlUpdate := `
 		UPDATE hatcher.users
@@ -726,8 +638,8 @@ func (s *Slack) insertTimeStandup(userid, fullname, time string) error {
 	return nil
 }
 
-// Gets a standup time based on the manager standup time selected
-func (s *Slack) getStandupTimeFromManager(managerid string) (timeStandup string) {
+// GetStandupTimeFromManager Gets a standup time based on the manager standup time selected
+func GetStandupTimeFromManager(managerid string) (timeStandup string) {
 
 	var time string
 
@@ -748,8 +660,8 @@ func (s *Slack) getStandupTimeFromManager(managerid string) (timeStandup string)
 	return time
 }
 
-// Gets a standup channel id based on the manager standup channel id selected
-func (s *Slack) getStandupChannelFromManager(managerid string) (channelStandup string) {
+// GetStandupChannelFromManager Gets a standup channel id based on the manager standup channel id selected
+func GetStandupChannelFromManager(managerid string) (channelStandup string) {
 
 	var channel string
 
@@ -770,8 +682,8 @@ func (s *Slack) getStandupChannelFromManager(managerid string) (channelStandup s
 	return channel
 }
 
-// Update the standup time of a new user based on the time of the manager
-func (s *Slack) updateTimeStandup(managerid, userid, time string) error {
+// UpdateTimeStandup Updates the standup time of a new user based on the time of the manager
+func UpdateTimeStandup(managerid, userid, time string) error {
 
 	var id string
 	if time == "NULL" {
@@ -813,8 +725,8 @@ func (s *Slack) updateTimeStandup(managerid, userid, time string) error {
 	return nil
 }
 
-// Update the standup channel of a new user based on the channel of the manager
-func (s *Slack) updateChannelStandup(managerid, userid, channel string) error {
+// UpdateChannelStandup Updates the standup channel of a new user based on the channel of the manager
+func UpdateChannelStandup(managerid, userid, channel string) error {
 
 	sqlUpdate := `
 		UPDATE hatcher.users
@@ -835,8 +747,8 @@ func (s *Slack) updateChannelStandup(managerid, userid, channel string) error {
 	return nil
 }
 
-// Ask in which channel to post the standup results
-func (s *Slack) askWhichChannelStandup(channelid, userid string) error {
+// AskWhichChannelStandup Asks in which channel to post the standup results
+func AskWhichChannelStandup(s *common.Slack, channelid, userid string) error {
 
 	params := slack.PostMessageParameters{}
 	attachment := slack.Attachment{
@@ -875,8 +787,8 @@ func (s *Slack) askWhichChannelStandup(channelid, userid string) error {
 	return nil
 }
 
-// Insert in the database the result of askWhichChannelStandup
-func (s *Slack) insertChannelStandup(userid, fullname, channel string) error {
+// InsertChannelStandup Inserts in the database the result of askWhichChannelStandup
+func InsertChannelStandup(userid, fullname, channel string) error {
 
 	sqlUpdate := `
 		UPDATE hatcher.users

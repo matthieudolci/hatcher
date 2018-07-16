@@ -6,36 +6,30 @@ import (
 	"os"
 	"strings"
 
+	"github.com/matthieudolci/hatcher/common"
+	"github.com/matthieudolci/hatcher/happiness"
+	"github.com/matthieudolci/hatcher/help"
+	"github.com/matthieudolci/hatcher/setup"
+	"github.com/matthieudolci/hatcher/standup"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/nlopes/slack"
 )
 
-// Slack is the primary struct for our slackbot
-type Slack struct {
-	Name  string
-	Token string
-
-	User   string
-	UserID string
-
-	Client       *slack.Client
-	MessageEvent *slack.MessageEvent
-}
-
 // New returns a new instance of the Slack struct, primary for our slackbot
-func New() (*Slack, error) {
+func New() (*common.Slack, error) {
 	token := os.Getenv("SLACK_TOKEN")
 	if len(token) == 0 {
 		return nil, fmt.Errorf("Could not discover API token")
 	}
 
-	return &Slack{Client: slack.New(token), Token: token, Name: "hatcher"}, nil
+	return &common.Slack{Client: slack.New(token), Token: token, Name: "hatcher"}, nil
 }
 
 // Run is the primary service to generate and kick off the slackbot listener
 // This portion receives all incoming Real Time Messages notices from the workspace
 // as registered by the API token
-func (s *Slack) Run(ctx context.Context) error {
+func Run(ctx context.Context, s *common.Slack) error {
 	authTest, err := s.Client.AuthTest()
 	if err != nil {
 		return fmt.Errorf("Did not authenticate: %+v", err)
@@ -49,12 +43,12 @@ func (s *Slack) Run(ctx context.Context) error {
 		"userid":   s.UserID,
 	}).Info("Bot is now registered")
 
-	go s.run(ctx)
+	go run(ctx, s)
 	return nil
 
 }
 
-func (s *Slack) run(ctx context.Context) {
+func run(ctx context.Context, s *common.Slack) {
 	// slack.SetLogger()
 	// s.Client.SetDebug(true)
 
@@ -67,19 +61,19 @@ func (s *Slack) run(ctx context.Context) {
 		switch x := msg.Data.(type) {
 		case *slack.MessageEvent:
 			if x.SubType == "message_changed" {
-				err := s.checkIfYesterdayMessageEdited(x)
+				err := standup.CheckIfYesterdayMessageEdited(s, x)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"userid": x.User,
 					}).WithError(err).Error("Checking if yesterday standup was edited")
 				}
-				err = s.checkIfTodayMessageEdited(x)
+				err = standup.CheckIfTodayMessageEdited(s, x)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"userid": x.User,
 					}).WithError(err).Error("Checking if yesterday standup was edited")
 				}
-				err = s.checkIfBlockerMessageEdited(x)
+				err = standup.CheckIfBlockerMessageEdited(s, x)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"userid": x.User,
@@ -115,7 +109,7 @@ func (s *Slack) run(ctx context.Context) {
 				"userid":   ev.User,
 			}).Info("Received message")
 
-			err = s.askSetup(ev)
+			err = setup.AskSetup(s, ev)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
@@ -123,7 +117,7 @@ func (s *Slack) run(ctx context.Context) {
 				}).WithError(err).Error("Posting setup reply to user")
 			}
 
-			err = s.askRemove(ev)
+			err = setup.AskRemove(s, ev)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
@@ -131,7 +125,7 @@ func (s *Slack) run(ctx context.Context) {
 				}).WithError(err).Error("Posting remove reply to user")
 			}
 
-			err = s.askHappinessSurvey(ev)
+			err = happiness.AskHappinessSurvey(s, ev)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
@@ -139,7 +133,7 @@ func (s *Slack) run(ctx context.Context) {
 				}).WithError(err).Error("Posting happiness survey reply to user")
 			}
 
-			err = s.standupYesterday(ev)
+			err = standup.AskStandupYesterday(s, ev)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
@@ -147,7 +141,7 @@ func (s *Slack) run(ctx context.Context) {
 				}).WithError(err).Error("Posting yesterday standup note question to user")
 			}
 
-			err = s.askSetupTimeHappinessSurvey(ev)
+			err = setup.AskSetupTimeHappinessSurvey(s, ev)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
@@ -155,7 +149,7 @@ func (s *Slack) run(ctx context.Context) {
 				}).WithError(err).Error("Posting happiness survey question to user")
 			}
 
-			err = s.askRemoveHappiness(ev)
+			err = setup.AskRemoveHappiness(s, ev)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
@@ -163,7 +157,7 @@ func (s *Slack) run(ctx context.Context) {
 				}).WithError(err).Error("Posting remove from happiness survey question to user")
 			}
 
-			err = s.askHelp(ev)
+			err = help.AskHelp(s, ev)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
