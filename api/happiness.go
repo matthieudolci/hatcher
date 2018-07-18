@@ -267,6 +267,7 @@ func surveyResultsAll(res *results) error {
 	}
 	return nil
 }
+
 func surveyResultsAllUserBetweenDatesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	res := results{}

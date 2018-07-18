@@ -89,6 +89,7 @@ func runSchedulerHappiness(s *common.Slack, timeHappiness, userid string) error 
 	scheduler.Every(1).Friday().At(timeHappiness).Do(happiness.AskHappinessSurveyScheduled, s, userid)
 	log.WithFields(log.Fields{
 		"userid": userid,
+		"time":   timeHappiness,
 	}).Info("Happiness Survey schedule tasks posted")
 
 	return nil
@@ -112,6 +113,7 @@ func runSchedulerStandup(s *common.Slack, timeStandup, userid string) error {
 	scheduler.Every(1).Friday().At(timeStandup).Do(standup.AskStandupYesterdayScheduled, s, userid)
 	log.WithFields(log.Fields{
 		"userid": userid,
+		"time":   timeStandup,
 	}).Info("Standup schedule tasks posted")
 
 	return nil
