@@ -80,6 +80,7 @@ func AskStandupYesterday(s *common.Slack, ev *slack.MessageEvent) error {
 					log.WithFields(log.Fields{
 						"timestamp": timestamp,
 					}).WithError(err).Error("Could not get the IM history of the message")
+					continue
 				}
 				log.WithFields(log.Fields{
 					"timestamp": timestamp,
@@ -185,6 +186,7 @@ loop:
 				log.WithFields(log.Fields{
 					"timestamp": timestamp,
 				}).WithError(err).Error("Could not get the IM history of the message")
+				continue
 			}
 			log.WithFields(log.Fields{
 				"timestamp": timestamp,
@@ -300,6 +302,7 @@ loop:
 				log.WithFields(log.Fields{
 					"timestamp": timestamp,
 				}).WithError(err).Error("Could not get the IM history of the message")
+				continue
 			}
 			log.WithFields(log.Fields{
 				"timestamp": timestamp,
@@ -418,10 +421,12 @@ loop:
 				log.WithFields(log.Fields{
 					"timestamp": timestamp,
 				}).WithError(err).Error("Could not get the IM history of the message")
+				continue
 			}
 			log.WithFields(log.Fields{
 				"timestamp": timestamp,
 			}).Debug("Getting IM history of the message")
+
 			message := history.Messages
 
 			if len(message) == 0 {
