@@ -15,7 +15,7 @@ func AskHelp(s *common.Slack, ev *slack.MessageEvent) error {
 	if len(m) == 0 || m[0] != "help" {
 		n := strings.Split(strings.TrimSpace(ev.Msg.Text), " ")[:1]
 		if len(n) == 0 || n[0] != "help" {
-			return fmt.Errorf("The message doesn't contain help")
+			log.Debug("The message doesn't contain help")
 		}
 	}
 
@@ -38,7 +38,11 @@ func AskHelp(s *common.Slack, ev *slack.MessageEvent) error {
 			},
 			{
 				Title: "happiness remove",
-				Value: "The command `happiness remove` remove your user from the daily happiness survey\nThis command needs to be pass in a direct message to Hatcher",
+				Value: "The command `happiness remove` removes your user from the daily happiness survey\nThis command needs to be pass in a direct message to Hatcher",
+			},
+			{
+				Title: "remove",
+				Value: "The command `remove` removes your user from Hatcher\nThis command needs to be pass in a direct message to Hatcher",
 			},
 		},
 		CallbackID: fmt.Sprintf("askHelp_%s", ev.User),

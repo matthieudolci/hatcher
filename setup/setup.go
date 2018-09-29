@@ -19,7 +19,7 @@ func AskSetup(s *common.Slack, ev *slack.MessageEvent) error {
 	if len(m) == 0 || m[0] != "hello" {
 		n := strings.Split(strings.TrimSpace(ev.Msg.Text), " ")[:1]
 		if len(n) == 0 || n[0] != "hello" {
-			return fmt.Errorf("The message doesn't contain hello")
+			log.Debug("The message doesn't contain hello")
 		}
 	}
 
