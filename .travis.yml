@@ -18,11 +18,11 @@ jobs:
     - stage: build docker latest
       script: 
         - make build-docker
-        - docker login -u $DOCKER_USER -p $DOCKER_PASS
+        - docker login -u $DOCKER_USER -p '$DOCKER_PASS'
         - make push
     - stage: build docker tag
       script: 
         - TAG=$TRAVIS_TAG make build-docker
-        - docker login -u $DOCKER_USER -p $DOCKER_PASS
+        - docker login -u $DOCKER_USER -p '$DOCKER_PASS'
         - TAG=$TRAVIS_TAG make push
 
