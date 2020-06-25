@@ -180,7 +180,7 @@ func SlackPostHandler(s *common.Slack) func(w http.ResponseWriter, r *http.Reque
 
 		switch name {
 		case "ManagerChosen":
-			managerid := fmt.Sprintf(payload.ActionCallback.AttachmentActions[0].Value)
+			managerid := fmt.Sprintf(payload.ActionCallback.AttachmentActions[0].SelectedOptions[0].Value)
 
 			manager, err := api.GetUserInfo(managerid)
 			if err != nil {
