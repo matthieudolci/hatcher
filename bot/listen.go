@@ -7,13 +7,12 @@ import (
 	"strings"
 
 	"github.com/matthieudolci/hatcher/common"
-	"github.com/matthieudolci/hatcher/happiness"
 	"github.com/matthieudolci/hatcher/help"
 	"github.com/matthieudolci/hatcher/setup"
 	"github.com/matthieudolci/hatcher/standup"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 // New returns a new instance of the Slack struct, primary for our slackbot
@@ -125,36 +124,12 @@ func run(ctx context.Context, s *common.Slack) {
 				}).WithError(err).Error("Posting remove reply to user")
 			}
 
-			err = happiness.AskHappinessSurvey(s, ev)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"username": user.Profile.RealName,
-					"userid":   ev.User,
-				}).WithError(err).Error("Posting happiness survey reply to user")
-			}
-
 			err = standup.AskStandupYesterday(s, ev)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"username": user.Profile.RealName,
 					"userid":   ev.User,
 				}).WithError(err).Error("Posting yesterday standup note question to user")
-			}
-
-			err = setup.AskSetupTimeHappinessSurvey(s, ev)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"username": user.Profile.RealName,
-					"userid":   ev.User,
-				}).WithError(err).Error("Posting happiness survey question to user")
-			}
-
-			err = setup.AskRemoveHappiness(s, ev)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"username": user.Profile.RealName,
-					"userid":   ev.User,
-				}).WithError(err).Error("Posting remove from happiness survey question to user")
 			}
 
 			err = help.AskHelp(s, ev)

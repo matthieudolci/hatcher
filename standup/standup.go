@@ -9,7 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/hatcher/common"
 	"github.com/matthieudolci/hatcher/database"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
 func AskStandupYesterday(s *common.Slack, ev *slack.MessageEvent) error {
@@ -43,12 +43,9 @@ func AskStandupYesterday(s *common.Slack, ev *slack.MessageEvent) error {
 			CallbackID: fmt.Sprintf("Yesterday_%s", ev.User),
 		}
 
-		params := slack.PostMessageParameters{
-			Attachments: []slack.Attachment{
-				attachment,
-			},
-		}
-		_, timestamp, err := s.Client.PostMessage(ev.Channel, "", params)
+		params := slack.MsgOptionAttachments(attachment)
+
+		_, timestamp, err := s.Client.PostMessage(ev.Channel, params)
 		if err != nil {
 			log.WithError(err).Error("Failed to post yesterday standup question")
 		}
@@ -70,12 +67,13 @@ func AskStandupYesterday(s *common.Slack, ev *slack.MessageEvent) error {
 				log.Info("Standup Canceled")
 				break loop
 			case <-ticker.C:
-				params2 := slack.HistoryParameters{
-					Count:  1,
-					Oldest: timestamp,
+				params2 := &slack.GetConversationHistoryParameters{
+					Limit:     1,
+					Oldest:    timestamp,
+					ChannelID: ev.Channel,
 				}
 
-				history, err := s.Client.GetIMHistory(ev.Channel, params2)
+				history, err := s.Client.GetConversationHistory(params2)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"timestamp": timestamp,
@@ -149,12 +147,8 @@ func AskStandupYesterdayScheduled(s *common.Slack, userid string) error {
 		CallbackID: fmt.Sprintf("standupYesterday_%s", userid),
 	}
 
-	params := slack.PostMessageParameters{
-		Attachments: []slack.Attachment{
-			attachment,
-		},
-	}
-	_, timestamp, err := s.Client.PostMessage(channelid, "", params)
+	params := slack.MsgOptionAttachments(attachment)
+	_, timestamp, err := s.Client.PostMessage(channelid, params)
 	if err != nil {
 		log.WithError(err).Error("Failed to post yesterday standup question")
 	}
@@ -176,12 +170,13 @@ loop:
 
 			break loop
 		case <-ticker.C:
-			params2 := slack.HistoryParameters{
-				Count:  1,
-				Oldest: timestamp,
+			params2 := &slack.GetConversationHistoryParameters{
+				Limit:     1,
+				Oldest:    timestamp,
+				ChannelID: channelid,
 			}
 
-			history, err := s.Client.GetIMHistory(channelid, params2)
+			history, err := s.Client.GetConversationHistory(params2)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"timestamp": timestamp,
@@ -267,12 +262,8 @@ func askStandupToday(s *common.Slack, channelid, userid, date, times, uuid strin
 		CallbackID: "standupToday",
 	}
 
-	params := slack.PostMessageParameters{
-		Attachments: []slack.Attachment{
-			attachment,
-		},
-	}
-	_, timestamp, err := s.Client.PostMessage(channelid, "", params)
+	params := slack.MsgOptionAttachments(attachment)
+	_, timestamp, err := s.Client.PostMessage(channelid, params)
 	if err != nil {
 		log.WithError(err).Error("Failed to post today standup question")
 	}
@@ -292,12 +283,13 @@ loop:
 			log.Info("Standup Canceled")
 			break loop
 		case <-ticker.C:
-			params2 := slack.HistoryParameters{
-				Count:  1,
-				Oldest: timestamp,
+			params2 := &slack.GetConversationHistoryParameters{
+				Limit:     1,
+				Oldest:    timestamp,
+				ChannelID: channelid,
 			}
 
-			history, err := s.Client.GetIMHistory(channelid, params2)
+			history, err := s.Client.GetConversationHistory(params2)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"timestamp": timestamp,
@@ -385,12 +377,9 @@ func askStandupBlocker(s *common.Slack, channelid, userid, date, times, uuid str
 		CallbackID: "standupBlocker",
 	}
 
-	params := slack.PostMessageParameters{
-		Attachments: []slack.Attachment{
-			attachment,
-		},
-	}
-	_, timestamp, err := s.Client.PostMessage(channelid, "", params)
+	params := slack.MsgOptionAttachments(attachment)
+
+	_, timestamp, err := s.Client.PostMessage(channelid, params)
 	if err != nil {
 		log.WithError(err).Error("Failed to post blocker standup question")
 	}
@@ -411,12 +400,13 @@ loop:
 
 			break loop
 		case <-ticker.C:
-			params2 := slack.HistoryParameters{
-				Count:  1,
-				Oldest: timestamp,
+			params2 := &slack.GetConversationHistoryParameters{
+				Limit:     1,
+				Oldest:    timestamp,
+				ChannelID: channelid,
 			}
 
-			history, err := s.Client.GetIMHistory(channelid, params2)
+			history, err := s.Client.GetConversationHistory(params2)
 			if err != nil {
 				log.WithFields(log.Fields{
 					"timestamp": timestamp,
@@ -504,12 +494,9 @@ func postStandupCancel(s *common.Slack, channelid string) error {
 		CallbackID: "standupCancel",
 	}
 
-	params := slack.PostMessageParameters{
-		Attachments: []slack.Attachment{
-			attachment,
-		},
-	}
-	_, _, err := s.Client.PostMessage(channelid, "", params)
+	params := slack.MsgOptionAttachments(attachment)
+
+	_, _, err := s.Client.PostMessage(channelid, params)
 	if err != nil {
 		log.WithError(err).Error("Failed to post standup canceled message")
 	}
@@ -526,12 +513,9 @@ func postStandupCancelTimeout(s *common.Slack, channelid string) error {
 		CallbackID: "standupCancelTimeout",
 	}
 
-	params := slack.PostMessageParameters{
-		Attachments: []slack.Attachment{
-			attachment,
-		},
-	}
-	_, _, err := s.Client.PostMessage(channelid, "", params)
+	params := slack.MsgOptionAttachments(attachment)
+
+	_, _, err := s.Client.PostMessage(channelid, params)
 	if err != nil {
 		log.WithError(err).Error("Failed to post standup canceled timeout message")
 	}
@@ -548,12 +532,9 @@ func postStandupDone(s *common.Slack, channelid, userid, date, time, uuid string
 		CallbackID: "standupDone",
 	}
 
-	params := slack.PostMessageParameters{
-		Attachments: []slack.Attachment{
-			attachment,
-		},
-	}
-	_, _, err := s.Client.PostMessage(channelid, "", params)
+	params := slack.MsgOptionAttachments(attachment)
+
+	_, _, err := s.Client.PostMessage(channelid, params)
 	if err != nil {
 		log.WithError(err).Error("Failed to post standup done message")
 	}
@@ -783,18 +764,12 @@ func postStandupResults(s *common.Slack, userid, date, times, uuid string) {
 				CallbackID: fmt.Sprintf("resultsStandupBlocker_%s", userid),
 			}
 
-			params := slack.PostMessageParameters{
-				Attachments: []slack.Attachment{
-					attachment,
-					attachment2,
-					attachment3,
-				},
-			}
+			params := slack.MsgOptionAttachments(attachment, attachment2, attachment3)
 
 			text := fmt.Sprintf("%s posted a daily standup note", displayname)
 			_, respTimestamp, err := s.Client.PostMessage(
 				standupChannel,
-				text,
+				slack.MsgOptionText(text, false),
 				params)
 			if err != nil {
 				log.WithError(err).Error("Failed to post standup results")

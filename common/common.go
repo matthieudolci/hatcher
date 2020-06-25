@@ -6,8 +6,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/hatcher/database"
-	"github.com/nlopes/slack"
 	uuid "github.com/satori/go.uuid"
+	"github.com/slack-go/slack"
 )
 
 // Slack is the primary struct for our slackbot

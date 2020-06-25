@@ -8,61 +8,62 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/matthieudolci/hatcher/common"
 	"github.com/matthieudolci/hatcher/database"
-	"github.com/nlopes/slack"
+	"github.com/slack-go/slack"
 )
 
-// Ask the first question on the user init process
+// AskSetup Asks the first question on the user init process
 // At this point the user can still cancel the stup
 func AskSetup(s *common.Slack, ev *slack.MessageEvent) error {
 
-	m := strings.Split(strings.TrimSpace(ev.Msg.Text), " ")[1:]
-	if len(m) == 0 || m[0] != "hello" {
-		n := strings.Split(strings.TrimSpace(ev.Msg.Text), " ")[:1]
-		if len(n) == 0 || n[0] != "hello" {
-			log.Debug("The message doesn't contain hello")
+	text := ev.Text
+	text = strings.TrimSpace(text)
+	text = strings.ToLower(text)
+
+	acceptedHello := map[string]bool{
+		"hello": true,
+	}
+
+	if acceptedHello[text] {
+		params := slack.PostMessageParameters{}
+		attachment := slack.Attachment{
+			Text:       "Do you want to setup/update your user with the bot Hatcher?",
+			CallbackID: fmt.Sprintf("setup_%s", ev.User),
+			Color:      "#AED6F1",
+			Actions: []slack.AttachmentAction{
+				{
+					Name:  "SetupYes",
+					Text:  "Yes",
+					Type:  "button",
+					Value: "SetupYes",
+					Style: "primary",
+				},
+				{
+					Name:  "SetupNo",
+					Text:  "No",
+					Type:  "button",
+					Value: "SetupNo",
+					Style: "danger",
+				},
+			},
 		}
-	}
 
-	params := slack.PostMessageParameters{}
-	attachment := slack.Attachment{
-		Text:       "Do you want to setup/update your user with the bot Hatcher?",
-		CallbackID: fmt.Sprintf("setup_%s", ev.User),
-		Color:      "#AED6F1",
-		Actions: []slack.AttachmentAction{
-			{
-				Name:  "SetupYes",
-				Text:  "Yes",
-				Type:  "button",
-				Value: "SetupYes",
-				Style: "primary",
-			},
-			{
-				Name:  "SetupNo",
-				Text:  "No",
-				Type:  "button",
-				Value: "SetupNo",
-				Style: "danger",
-			},
-		},
-	}
-	params.Attachments = []slack.Attachment{attachment}
-	params.User = ev.User
-	params.AsUser = true
+		params.User = ev.User
+		params.AsUser = true
 
-	_, err := s.Client.PostEphemeral(
-		ev.Channel,
-		ev.User,
-		slack.MsgOptionAttachments(params.Attachments...),
-		slack.MsgOptionPostMessageParameters(params),
-	)
-	if err != nil {
-		log.WithError(err).Error("Could not post askSetup question")
+		_, err := s.Client.PostEphemeral(
+			ev.Channel,
+			ev.User,
+			slack.MsgOptionAttachments(attachment),
+			slack.MsgOptionPostMessageParameters(params),
+		)
+		if err != nil {
+			log.WithError(err).Error("Could not post askSetup question")
+		}
+		log.WithFields(log.Fields{
+			"userid":  ev.User,
+			"channel": ev.Channel,
+		}).Info("Message for askSetup posted")
 	}
-	log.WithFields(log.Fields{
-		"userid":  ev.User,
-		"channel": ev.Channel,
-	}).Info("Message for askSetup posted")
-
 	return nil
 }
 
@@ -152,14 +153,14 @@ func AskRemove(s *common.Slack, ev *slack.MessageEvent) error {
 				},
 			},
 		}
-		params.Attachments = []slack.Attachment{attachment}
+
 		params.User = ev.User
 		params.AsUser = true
 
 		_, err := s.Client.PostEphemeral(
 			ev.Channel,
 			ev.User,
-			slack.MsgOptionAttachments(params.Attachments...),
+			slack.MsgOptionAttachments(attachment),
 			slack.MsgOptionPostMessageParameters(params),
 		)
 		if err != nil {
@@ -197,85 +198,6 @@ func RemoveBot(userid, fullname string) error {
 	return nil
 }
 
-//AskRemoveHappiness Asks if we want to remove our user from the happiness survey
-func AskRemoveHappiness(s *common.Slack, ev *slack.MessageEvent) error {
-	text := ev.Text
-	text = strings.TrimSpace(text)
-	text = strings.ToLower(text)
-
-	acceptedRemoveHappiness := map[string]bool{
-		"happiness remove": true,
-	}
-
-	if acceptedRemoveHappiness[text] {
-		params := slack.PostMessageParameters{}
-		attachment := slack.Attachment{
-			Text:       "Do you want to remove your user form the happiness survey?",
-			CallbackID: fmt.Sprintf("remove_%s", ev.User),
-			Color:      "#FF0000",
-			Actions: []slack.AttachmentAction{
-				{
-					Name:  "RemoveHapinnessYes",
-					Text:  "Yes",
-					Type:  "button",
-					Value: "RemoveHapinnessYes",
-					Style: "primary",
-				},
-				{
-					Name:  "RemoveHappinessNo",
-					Text:  "No",
-					Type:  "button",
-					Value: "RemoveHappinessNo",
-					Style: "danger",
-				},
-			},
-		}
-		params.Attachments = []slack.Attachment{attachment}
-		params.User = ev.User
-		params.AsUser = true
-
-		_, err := s.Client.PostEphemeral(
-			ev.Channel,
-			ev.User,
-			slack.MsgOptionAttachments(params.Attachments...),
-			slack.MsgOptionPostMessageParameters(params),
-		)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"channel": ev.Channel,
-				"userid":  ev.User,
-			}).WithError(err).Error("Could not post message for askRemoveHappiness")
-		}
-		log.WithFields(log.Fields{
-			"channel": ev.Channel,
-			"userid":  ev.User,
-		}).Info("Message for askRemoveHappiness posted")
-	}
-	return nil
-}
-
-// RemoveHappiness remove the user from the bot/database
-func RemoveHappiness(userid, fullname string) error {
-
-	sqlDelete := `
-		UPDATE hatcher.users
-		SET happiness_schedule = NULL
-		WHERE userid = $1;`
-	_, err := database.DB.Exec(sqlDelete, userid)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"userid":   userid,
-			"username": fullname,
-		}).WithError(err).Error("Couldn't not check if user exist in the database")
-	}
-	log.WithFields(log.Fields{
-		"username": fullname,
-		"userid":   userid,
-	}).Info("Happiness survey time was removed")
-
-	return nil
-}
-
 // AskWhoIsManager Ask who is the user manager
 func AskWhoIsManager(s *common.Slack, channelid, userid string) error {
 
@@ -300,14 +222,14 @@ func AskWhoIsManager(s *common.Slack, channelid, userid string) error {
 			},
 		},
 	}
-	params.Attachments = []slack.Attachment{attachment}
+
 	params.User = userid
 	params.AsUser = true
 
 	_, err := s.Client.PostEphemeral(
 		channelid,
 		userid,
-		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionAttachments(attachment),
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
@@ -372,14 +294,14 @@ func AskIfManager(s *common.Slack, channelid, userid string) error {
 			},
 		},
 	}
-	params.Attachments = []slack.Attachment{attachment}
+
 	params.User = userid
 	params.AsUser = true
 
 	_, err := s.Client.PostEphemeral(
 		channelid,
 		userid,
-		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionAttachments(attachment),
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
@@ -421,125 +343,6 @@ func IsManager(userid, fullname, ismanager string) error {
 		"userid":   userid,
 	}).Info("Is not setup as a manager")
 
-	return nil
-}
-
-// AskSetupTimeHappinessSurvey Ask what time the happiness survey should be send
-func AskSetupTimeHappinessSurvey(s *common.Slack, ev *slack.MessageEvent) error {
-	text := ev.Text
-	text = strings.TrimSpace(text)
-	text = strings.ToLower(text)
-
-	acceptedHappinnessSurvey := map[string]bool{
-		"happiness setup": true,
-	}
-
-	if acceptedHappinnessSurvey[text] {
-		params := slack.PostMessageParameters{}
-		attachment := slack.Attachment{
-			Text:       "What time do you want the happiness survey to happen?",
-			CallbackID: fmt.Sprintf("happTime_%s", ev.User),
-			Color:      "#AED6F1",
-			Actions: []slack.AttachmentAction{
-				{
-					Name: "SetupHappinessTime",
-					Type: "select",
-					Options: []slack.AttachmentActionOption{
-						{
-							Text:  "09:00",
-							Value: "09:00",
-						},
-						{
-							Text:  "09:15",
-							Value: "09:15",
-						},
-						{
-							Text:  "09:30",
-							Value: "09:30",
-						},
-						{
-							Text:  "09:45",
-							Value: "09:45",
-						},
-						{
-							Text:  "10:00",
-							Value: "10:00",
-						},
-						{
-							Text:  "10:15",
-							Value: "10:15",
-						},
-						{
-							Text:  "10:30",
-							Value: "10:30",
-						},
-						{
-							Text:  "10:45",
-							Value: "10:45",
-						},
-						{
-							Text:  "11:00",
-							Value: "11:00",
-						},
-						{
-							Text:  "11:15",
-							Value: "11:15",
-						},
-						{
-							Text:  "11:30",
-							Value: "11:30",
-						},
-						{
-							Text:  "11:45",
-							Value: "11:45",
-						},
-					},
-				},
-			},
-		}
-		params.Attachments = []slack.Attachment{attachment}
-		params.User = ev.User
-		params.AsUser = true
-
-		_, err := s.Client.PostEphemeral(
-			ev.Channel,
-			ev.User,
-			slack.MsgOptionAttachments(params.Attachments...),
-			slack.MsgOptionPostMessageParameters(params),
-		)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"userid":  ev.User,
-				"channel": ev.Channel,
-			}).WithError(err).Error("Could not post message askTimeHappinessSurvey")
-		}
-		log.WithFields(log.Fields{
-			"userid":  ev.User,
-			"channel": ev.Channel,
-		}).Info("Message askTimeHappinessSurvey posted")
-	}
-	return nil
-}
-
-// InsertTimeHappinessSurvey Inserts in the database the result of askTimeHappinessSurvey
-func InsertTimeHappinessSurvey(userid, fullname, time string) error {
-
-	sqlUpdate := `
-		UPDATE hatcher.users
-		SET happiness_schedule = $2
-		WHERE userid = $1
-		RETURNING id;`
-	err := database.DB.QueryRow(sqlUpdate, userid, time).Scan(&userid)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"userid":   userid,
-			"username": fullname,
-		}).WithError(err).Error("Couldn't update the time of the happiness survey")
-	}
-	log.WithFields(log.Fields{
-		"username": fullname,
-		"userid":   userid,
-	}).Info("Time of the happiness survey for user was updated")
 	return nil
 }
 
@@ -592,14 +395,14 @@ func AskTimeStandup(s *common.Slack, channelid, userid string) error {
 			},
 		},
 	}
-	params.Attachments = []slack.Attachment{attachment}
+
 	params.User = userid
 	params.AsUser = true
 
 	_, err := s.Client.PostEphemeral(
 		channelid,
 		userid,
-		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionAttachments(attachment),
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {
@@ -764,14 +567,14 @@ func AskWhichChannelStandup(s *common.Slack, channelid, userid string) error {
 			},
 		},
 	}
-	params.Attachments = []slack.Attachment{attachment}
+
 	params.User = userid
 	params.AsUser = true
 
 	_, err := s.Client.PostEphemeral(
 		channelid,
 		userid,
-		slack.MsgOptionAttachments(params.Attachments...),
+		slack.MsgOptionAttachments(attachment),
 		slack.MsgOptionPostMessageParameters(params),
 	)
 	if err != nil {

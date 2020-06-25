@@ -22,7 +22,7 @@ Hatcher is a slack bot written in go. It can:
 
 - Start ngrok
 
-    ``` ngork http 9191```
+    ``` ngrok http 9191```
 
 - Copy and past the ngrok url into https://api.slack.com/apps/{app_id}/interactive-messages?
 

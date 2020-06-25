@@ -16,24 +16,6 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 SET default_with_oids = false;
 
-CREATE TABLE hatcher.happiness (
-    userid text,
-    id integer NOT NULL,
-    date text,
-    time text,
-    results integer DEFAULT 0
-);
-
-CREATE SEQUENCE hatcher.happinessid_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-ALTER SEQUENCE hatcher.happinessid_seq OWNED BY hatcher.happiness.id;
-
 CREATE TABLE hatcher.standupyesterday (
     response text,
     timestamp text,
@@ -102,7 +84,6 @@ CREATE TABLE hatcher.users (
     managerid text,
     ismanager boolean DEFAULT false,
     displayname text,
-    happiness_schedule time without time zone,
     standup_schedule time without time zone,
     standup_channel text
 );
@@ -134,8 +115,6 @@ CREATE SEQUENCE hatcher.standupresults_seq
     CACHE 1;
 
 ALTER SEQUENCE hatcher.standupresults_seq OWNED BY hatcher.standupresults.id;
-
-ALTER TABLE ONLY hatcher.happiness ALTER COLUMN id SET DEFAULT nextval('hatcher.happinessid_seq'::regclass);
 
 ALTER TABLE ONLY hatcher.users ALTER COLUMN id SET DEFAULT nextval('hatcher.usersid_seq'::regclass);
 
