@@ -139,7 +139,10 @@ func AskStandupYesterdayScheduled(s *common.Slack, userid string) error {
 		"uuid": uuid,
 	}).Info("Standup uuid generated")
 
-	_, _, channelid, _ := s.Client.OpenIMChannel(userid)
+	_, _, channelid, err := s.Client.OpenIMChannel(userid)
+	if err != nil {
+		log.WithError(err).Error("OpenIMChannel could not get channel id")
+	}
 
 	attachment := slack.Attachment{
 		Text:       "What did you do yesterday?",
