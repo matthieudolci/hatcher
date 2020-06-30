@@ -139,7 +139,11 @@ func AskStandupYesterdayScheduled(s *common.Slack, userid string) error {
 		"uuid": uuid,
 	}).Info("Standup uuid generated")
 
-	_, _, channelid, err := s.Client.OpenIMChannel(userid)
+	params := &slack.OpenConversationParameters{
+		Users: []string{userid},
+	}
+
+	channelid, _, _, err := s.Client.OpenConversation(params)
 	if err != nil {
 		log.WithError(err).Error("OpenIMChannel could not get channel id")
 	}
@@ -150,8 +154,8 @@ func AskStandupYesterdayScheduled(s *common.Slack, userid string) error {
 		CallbackID: fmt.Sprintf("standupYesterday_%s", userid),
 	}
 
-	params := slack.MsgOptionAttachments(attachment)
-	_, timestamp, err := s.Client.PostMessage(channelid, params)
+	params2 := slack.MsgOptionAttachments(attachment)
+	_, timestamp, err := s.Client.PostMessage(channelid.ID, params2)
 	if err != nil {
 		log.WithError(err).Error("Failed to post yesterday standup question")
 	}
@@ -165,7 +169,7 @@ loop:
 	for {
 		select {
 		case <-timer.C:
-			err = postStandupCancelTimeout(s, channelid)
+			err = postStandupCancelTimeout(s, channelid.ID)
 			if err != nil {
 				log.WithError(err).Error("Could not cancel standup")
 			}
@@ -176,7 +180,7 @@ loop:
 			params2 := &slack.GetConversationHistoryParameters{
 				Limit:     1,
 				Oldest:    timestamp,
-				ChannelID: channelid,
+				ChannelID: channelid.ID,
 			}
 
 			history, err := s.Client.GetConversationHistory(params2)
@@ -201,7 +205,7 @@ loop:
 				stamp := history.Messages[0].Msg.Timestamp
 				switch text {
 				case "cancel":
-					err = postStandupCancel(s, channelid)
+					err = postStandupCancel(s, channelid.ID)
 					if err != nil {
 						log.WithError(err).Error("Could not cancel standup")
 					}
@@ -215,7 +219,7 @@ loop:
 					}
 					log.Info("Starting yesterdayRegister")
 
-					err = askStandupToday(s, channelid, userid, date, times, uuid)
+					err = askStandupToday(s, channelid.ID, userid, date, times, uuid)
 					if err != nil {
 						log.WithError(err).Error("Could not start askStandupToday")
 					}
